@@ -1,5 +1,25 @@
+// CMPE243 - Macros
+#define CMPE243_RCCAR 1
+
 /* This file is part of the Razor AHRS Firmware */
 
+#if CMPE243_RCCAR
+// Output angle: only Yaw - this is enough for our heading
+void output_angles()
+{
+  if (output_format == OUTPUT__FORMAT_BINARY)
+  {
+    float ypr[3];  
+    ypr[0] = TO_DEG(yaw);
+    Serial.write((byte*) ypr, 4);  // No new-line
+  }
+  else if (output_format == OUTPUT__FORMAT_TEXT)
+  {
+    Serial.print("#Y=");
+    Serial.print(TO_DEG(yaw)); Serial.println();
+  }
+}
+#else
 // Output angles: yaw, pitch, roll
 void output_angles()
 {
@@ -19,6 +39,7 @@ void output_angles()
     Serial.print(TO_DEG(roll)); Serial.println();
   }
 }
+#endif
 
 void output_calibration(int calibration_sensor)
 {
