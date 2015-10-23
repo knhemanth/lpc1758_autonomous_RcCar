@@ -154,8 +154,14 @@
 /*********** USER SETUP AREA! Set your options here! *************/
 /*****************************************************************/
 
+// CMPE243 - Macros
+#define CMPE243_RCCAR 1
+
 // HARDWARE OPTIONS
 /*****************************************************************/
+#if CMPE243_RCCAR
+  #define HW__VERSION_CODE 10736 // SparkFun "9DOF Razor IMU" version "SEN-10736" (HMC5883L magnetometer)
+#endif
 // Select your hardware here by uncommenting one line!
 //#define HW__VERSION_CODE 10125 // SparkFun "9DOF Razor IMU" version "SEN-10125" (HMC5843 magnetometer)
 //#define HW__VERSION_CODE 10736 // SparkFun "9DOF Razor IMU" version "SEN-10736" (HMC5883L magnetometer)
@@ -188,8 +194,12 @@
 int output_mode = OUTPUT__MODE_ANGLES;
 int output_format = OUTPUT__FORMAT_TEXT;
 
+#if CMPE243_RCCAR
+  #define OUTPUT__STARTUP_STREAM_ON false  // true or false
+#else
 // Select if serial continuous streaming output is enabled per default on startup.
 #define OUTPUT__STARTUP_STREAM_ON true  // true or false
+#endif
 
 // If set true, an error message will be output if we fail to read sensor data.
 // Message format: "!ERR: reading <sensor>", followed by "\r\n".
