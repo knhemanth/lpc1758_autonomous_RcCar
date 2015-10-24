@@ -1,2 +1,5 @@
-Bluetooth Api readme
+1) Bluetooth basic app added
 
+2)Bluetooth trial apps added
+
+3)Bluetooth base code retained and file structure modified
