@@ -70,11 +70,10 @@ class hw3_uart : public scheduler_task
 
 #if 1
             char character;
-            uart_obj.uart3_putchar('4');
             character = uart_obj.uart3_getchar();
-            char* charptr = &character;
-            puts(charptr);
-            vTaskDelay(1000);
+            //char* charptr = &character;
+            //puts(charptr);
+            //vTaskDelay(1000); //used for testing
 
 #endif
 
