@@ -1,3 +1,5 @@
+This readme has information regarding files that contain core logic code
+
 1) Bluetooth basic app added
 
 2)Bluetooth trial apps added
