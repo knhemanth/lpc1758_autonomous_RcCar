@@ -31,6 +31,8 @@
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
+#include "geo_controller.hpp"
+#include "imu.hpp"
 
 
 
@@ -41,7 +43,24 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 void period_1Hz(void)
 {
-    LE.toggle(1);
+    static imu& imu_handle = IMUInterface;  // Handle to singleton IMU object
+        uint16_t imu_heading = 0;       // 2-byte angle between 0 and 360. Compromise with precision
+        float gps_lat = 0;
+        float gps_long = 0;
+        geo_spd_angle geo_data;
+        geo_loc gps_data;
+
+        imu_heading = static_cast<uint16_t>(imu_handle.getHeading());
+        // Get gps_lat and gps_long from GPS sensors
+
+        // Call func to calculate bearing
+
+        geo_data.bearing = 0;   // put bearing here
+        geo_data.heading = imu_heading;
+        geo_data.speed = 0;     // Put speed from GPS here
+
+        gps_data.latitude = gps_lat;
+        gps_data.longitude = gps_long;
 }
 
 void period_10Hz(void)
