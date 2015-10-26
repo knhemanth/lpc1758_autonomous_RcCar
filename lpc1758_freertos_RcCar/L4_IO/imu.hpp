@@ -40,6 +40,11 @@
 
 #define IMU_RESET_TIMEOUT 1000 // Timeout for Reset
 
+#define IMU_ERR_MAX_COUNT       32
+#define IMU_ERR_BACKOFF_COUNT   64
+
+#define IMU_ERR     5
+
 
 #define IMUInterface imu::getInstance() // Singleton
 
@@ -58,6 +63,7 @@ class imu : public SingletonTemplate<imu>
         bool getValue(char * external_buffer, unsigned int external_buffer_size);
         void resetIMU(void);
         void clearBuffer(void);
+        float getHeading( void );
 
         // Helper Functions
         bool getYawReadingString(void);
@@ -73,7 +79,10 @@ class imu : public SingletonTemplate<imu>
 
         char buffer[IMU_BUFFER_SIZE]; // Character Array that would hold the Yaw Reading
         char readYawCommand[IMU_COMMAND_SIZE]; // Read Command to be sent to IMU
+        float imu_old_heading;
+        unsigned int err_count;
         QueueHandle_t queueHandle;
+
 };
 
 #define IMUTASK_DELAY 50 // 50ms Sleep for IMUTask; Get value every 50ms

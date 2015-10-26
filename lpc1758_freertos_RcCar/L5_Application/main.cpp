@@ -25,6 +25,10 @@
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
+#include "geo_controller.hpp"
+#include "can_msg_id.h"
+
+static void geo_controller_init( void );    // Initialization routing for Geo controller
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -57,8 +61,11 @@ int main(void)
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
+    /* Call controller init routine before starting periodic call backs */
+    geo_controller_init();
+
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
-    #if 0
+    #if 1
     scheduler_add_task(new periodicSchedulerTask());
     #endif
 
@@ -126,3 +133,21 @@ int main(void)
     scheduler_start(); ///< This shouldn't return
     return -1;
 }
+
+void geo_controller_init( void )
+{
+    can_std_id_t can_id_sync_ack;       // Ack from master
+    can_std_id_t can_id_loc_update;     // Location update from master
+
+
+    // Initialize the can bus
+    CAN_init(GEO_CNTL_CANBUS, GEO_CNTL_BAUD, GEO_CNTL_CANRXQ, GEO_CNTL_CANTXQ , bus_off_cb, data_ovr_cb);
+
+    // Setup full can filters
+    CAN_fullcan_add_entry(GEO_CNTL_CANBUS, can_id_sync_ack, can_id_loc_update);
+
+    // Enable the bus
+    CAN_reset_bus(GEO_CNTL_CANBUS);
+
+}
+
