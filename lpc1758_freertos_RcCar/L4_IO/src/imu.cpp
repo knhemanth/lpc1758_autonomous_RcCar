@@ -6,19 +6,16 @@
  */
 
 #include "imu.hpp"
+#include "io.hpp"
+#include "file_logger.h"
+#include "geo_controller.hpp"
+
 
 /* TO DO:
  * 1. Current Queue size is 1. The producer queues 1 value every 50 ms
  * while the consumer de-queues every 100ms. Modify the size so that every read
  * by the consumer returns the most recent data.
  * */
-
-/* Custom Module Logging for testing IMU Interfacing */
-#if 0 // 1 - Enable, 0 - Disable
-#define CUSTOM_DEBUG(...) LOG_DEBUG(__VA_ARGS__)
-#else
-#define CUSTOM_DEBUG(...)
-#endif
 
 /* Constructor
  * Initializes UART used to interface with the IMU
@@ -27,7 +24,9 @@ imu::imu():
     imuUart(Uart3::getInstance()),
     imuResetPin(P2_5),
     readYawCommand{'#', 'f'},
-    queueHandle(xQueueCreate(IMU_INTERNAL_QUEUE_LENGTH, IMU_BUFFER_SIZE))
+    queueHandle(xQueueCreate(IMU_INTERNAL_QUEUE_LENGTH, IMU_BUFFER_SIZE)),
+    imu_old_heading(0.0),
+    err_count(0)
 {
     // Load Command String to Array
 
@@ -154,6 +153,59 @@ void imu::clearBuffer(void)
 {
     memset(buffer, 0, sizeof(buffer));
 }
+
+float imu::getHeading( void )
+{
+    char IMU_str_reading[IMU_BUFFER_SIZE];  // IMU readings in string format
+    bool status = false;
+
+
+    float imu_heading = 0;
+
+    // Get readings from IMU every 10Hz
+    status = getValue( IMU_str_reading, sizeof(IMU_str_reading));
+    if( !status )
+    {
+        if( err_count > IMU_ERR_BACKOFF_COUNT )
+        {
+            LOG_ERROR("CRITICAL ERROR!!!! IMU not responsive\n");
+            return -IMU_ERR;
+        }
+
+        LOG_ERROR("ERROR!!! Cannot get IMU value\n");
+        err_count++;
+
+        // If the error_count exceeds threshold, report externally
+        if( err_count > IMU_ERR_MAX_COUNT)
+        {
+            LE.on(1);
+            LOG_ERROR("IMU not responsive. Requesting reset\n");
+            resetIMU();
+        }
+
+        // Return old value
+        return imu_old_heading;
+    }
+
+    // All is well and error count is within BACKOFF_COUNT
+    else
+    {
+        if( err_count <= IMU_ERR_BACKOFF_COUNT )
+        {
+            err_count = 0;
+            LE.off(1);
+        }
+
+        // We have IMU data as a string, convert to float
+        imu_heading = strtof( IMU_str_reading, NULL );
+
+        imu_old_heading = imu_heading;
+
+    }
+
+    return imu_heading;
+}
+
 
 /* IMUTask
  * This task sends a read command and writes the received message on a local queue.
