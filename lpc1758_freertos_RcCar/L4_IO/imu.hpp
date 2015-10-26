@@ -38,7 +38,7 @@
 #define IMU_INTERNAL_QUEUE_TIMEOUT 0 // Timeout for internal Queue
 #define IMU_COMMAND_SIZE 2 // Size of Command sent to IMU
 
-#define IMU_RESET_TIMEOUT 1000 // Timeout for Reset
+#define IMU_RESET_TIMEOUT 20 // Timeout for Reset
 
 #define IMU_ERR_MAX_COUNT       32
 #define IMU_ERR_BACKOFF_COUNT   64

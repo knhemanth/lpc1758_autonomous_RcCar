@@ -5,10 +5,12 @@
  *      Author: Akshay Vijaykumar
  */
 
+#include <stdlib.h>             // strtof()
 #include "imu.hpp"
 #include "io.hpp"
 #include "file_logger.h"
 #include "geo_controller.hpp"
+#include <stdio.h>
 
 
 /* TO DO:
@@ -24,9 +26,10 @@ imu::imu():
     imuUart(Uart3::getInstance()),
     imuResetPin(P2_5),
     readYawCommand{'#', 'f'},
-    queueHandle(xQueueCreate(IMU_INTERNAL_QUEUE_LENGTH, IMU_BUFFER_SIZE)),
     imu_old_heading(0.0),
-    err_count(0)
+        err_count(0),
+    queueHandle(xQueueCreate(IMU_INTERNAL_QUEUE_LENGTH, IMU_BUFFER_SIZE))
+
 {
     // Load Command String to Array
 
@@ -168,7 +171,7 @@ float imu::getHeading( void )
     {
         if( err_count > IMU_ERR_BACKOFF_COUNT )
         {
-            LOG_ERROR("CRITICAL ERROR!!!! IMU not responsive\n");
+           LOG_ERROR("CRITICAL ERROR!!!! IMU not responsive\n");
             return -IMU_ERR;
         }
 
@@ -197,8 +200,7 @@ float imu::getHeading( void )
         }
 
         // We have IMU data as a string, convert to float
-        imu_heading = strtof( IMU_str_reading, NULL );
-
+        imu_heading = strtof( (IMU_str_reading+3), NULL );  // Skip #Y=
         imu_old_heading = imu_heading;
 
     }
