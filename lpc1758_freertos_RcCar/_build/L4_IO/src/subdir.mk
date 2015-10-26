@@ -4,22 +4,25 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../L4_IO/src/geo_controller.cpp \
 ../L4_IO/src/gpio.cpp \
+../L4_IO/src/imu.cpp \
 ../L4_IO/src/io_source.cpp \
-../L4_IO/src/storage.cpp \
-../L4_IO/src/ultrasonic_sensor.cpp 
+../L4_IO/src/storage.cpp 
 
 OBJS += \
+./L4_IO/src/geo_controller.o \
 ./L4_IO/src/gpio.o \
+./L4_IO/src/imu.o \
 ./L4_IO/src/io_source.o \
-./L4_IO/src/storage.o \
-./L4_IO/src/ultrasonic_sensor.o 
+./L4_IO/src/storage.o 
 
 CPP_DEPS += \
+./L4_IO/src/geo_controller.d \
 ./L4_IO/src/gpio.d \
+./L4_IO/src/imu.d \
 ./L4_IO/src/io_source.d \
-./L4_IO/src/storage.d \
-./L4_IO/src/ultrasonic_sensor.d 
+./L4_IO/src/storage.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

@@ -82,7 +82,6 @@ class imu : public SingletonTemplate<imu>
         float imu_old_heading;
         unsigned int err_count;
         QueueHandle_t queueHandle;
-
 };
 
 #define IMUTASK_DELAY 50 // 50ms Sleep for IMUTask; Get value every 50ms
@@ -106,7 +105,6 @@ class IMUTask : public scheduler_task
 
     bool run(void *p);
 };
-
 
 
 #endif /* L4_IO_IMU_HPP_ */

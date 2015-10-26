@@ -31,6 +31,7 @@ SUBDIRS := \
 newlib \
 L5_Application/source \
 L5_Application/source/cmd_handlers \
+L5_Application/periodic_scheduler \
 L5_Application \
 L5_Application/examples \
 L4_IO/wireless/src \
