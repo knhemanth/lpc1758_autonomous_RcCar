@@ -58,20 +58,10 @@ bool can_init_stat = 0;
  *        In either case, you should avoid using this bus or interfacing to external components because
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
-can_void_func_t bus_off_callback()
-{
-//CAN_reset_bus(can1);
-return 0;
-}
-
-can_void_func_t data_ov()
-{
-return 0;
-}
 
 void can_init()
 {
-    can_init_stat = CAN_init(can2, can_baud_kbps, 512, 512, bus_off_callback(), data_ov());
+    can_init_stat = CAN_init(can2, can_baud_kbps, 512, 512, 0,0);
     CAN_bypass_filter_accept_all_msgs();
     CAN_reset_bus(can2);
     tx_mssg.msg_id = can_mssg_id;
@@ -89,7 +79,7 @@ class bt_uart_task : public scheduler_task
 
         bool init(void)
         {
-
+            can_init();
             Uart3 &bt_uart = Uart3::getInstance();
             bt_uart.init(baud_rate, bt_rx_size, bt_tx_size);
             return true;
@@ -118,7 +108,7 @@ class bt_uart_task : public scheduler_task
 
            if(can_init_stat)
            {
-               CAN_tx(can2, &tx_mssg,portMAX_DELAY);
+               CAN_tx(can2, &tx_mssg,5);
            }
            }
            return true;

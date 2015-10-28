@@ -35,6 +35,8 @@ public class MainActivity extends Activity {
 
     private static String tx_data1 = "12345\n";
 
+    private static String tx_data2 = "02345\n";
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -67,7 +69,7 @@ public class MainActivity extends Activity {
         btnOff.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
                 if(connect == 1) {
-                    sendData(tx_data1);
+                    sendData(tx_data2);
                     Toast.makeText(getBaseContext(), "Turn off LED", Toast.LENGTH_SHORT).show();
                 }
             }
