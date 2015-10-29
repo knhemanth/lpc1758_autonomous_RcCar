@@ -32,9 +32,7 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "geo_controller.hpp"
-#include "imu.hpp"
-#include "can_msg_id.h"
-#include "can.h"
+
 
 #include <stdio.h>
 
@@ -47,56 +45,23 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 void period_1Hz(void)
 {
-
+    /// XXX: Master should send heartbeat ON/oFF
+    // We should toggle one of the LEDs ON/OFF according to it
 }
 
 void period_10Hz(void)
 {
-    static imu& imu_handle = IMUInterface;  // Handle to singleton IMU object
-        uint16_t imu_heading = 0;       // 2-byte angle between 0 and 360. Compromise with precision
-        float gps_lat = 0;
-        float gps_long = 0;
-        geo_spd_angle geo_data;
-        geo_loc gps_data;
-        can_msg_t geo_msg;
-        can_msg_t gps_msg;
-        bool can_status = false;
+    // XXX: Don't put a lot of code here, instead call sub routines such as
+    // send_heading()
+    // send_geo();
 
-        imu_heading = static_cast<uint16_t>(imu_handle.getHeading());
-
-        // Get gps_lat and gps_long from GPS sensors
-
-        // Call func to calculate bearing
-
-        geo_data.bearing = 0;   // put bearing here
-        geo_data.heading = imu_heading;
-        geo_data.speed = 0;     // Put speed from GPS here
-
-        gps_data.latitude = gps_lat;
-        gps_data.longitude = gps_long;
-
-
-        geo_msg.msg_id = GEO_SPEED_ANGLE_ID;
-        geo_msg.frame_fields.is_29bit = 0;
-        geo_msg.frame_fields.data_len = sizeof(geo_data);
-        memcpy((void *)&geo_msg.data.qword, (void *)&geo_data, sizeof(geo_data));
-
-        gps_msg.msg_id = GEO_LOC_DATA_ID;
-        gps_msg.frame_fields.is_29bit = 0;
-        gps_msg.frame_fields.data_len = sizeof(gps_data);
-        memcpy((void *)&gps_msg.data.qword, (void *)&gps_data, sizeof(gps_data));
-
-        can_status = CAN_tx(GEO_CNTL_CANBUS, &geo_msg, GEO_CNTL_CAN_TIMEOUT);
-        can_status = CAN_tx(GEO_CNTL_CANBUS, &gps_msg, GEO_CNTL_CAN_TIMEOUT);
-
-        if( !can_status )
-        {
-            LOG_ERROR("ERROR!!! Geo controller CAN message not sent!!");
-            LE.on(1);
-        }
-
-        else
-            LE.off(1);
+    /*
+     * TODO: For GPS team
+     * Don't change the order of these calls.
+     * If you change then call gps getters in both functions
+     */
+    geo_send_heading();
+    geo_send_gps();
 
 }
 

@@ -65,8 +65,11 @@ int main(void)
     bool status = geo_controller_init();
 
     /* If init failed there is no point in continuing */
+    // XXX: Keep trying to sync forever, no point dying here
+    // DONE: The init function will try to sync forever. This case should never happen
     if( !status )
     {
+        LOG_ERROR("ERROR!!!! Geo Controller - This should never happen\n");
         while( 1 )
         {
             LE.toggle(1);
