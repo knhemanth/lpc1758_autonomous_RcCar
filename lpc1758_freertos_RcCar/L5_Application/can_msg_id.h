@@ -73,10 +73,10 @@ typedef struct{
  */
 typedef struct{
 
-    uint64_t ack_motorio:8;     // Acknowledge motorio controller
-    uint64_t ack_sensor:8;          // Acknowledge sensor controller
-    uint64_t ack_geo:8;         // Acknowledge geo controller
-    uint64_t ack_bluetooth:8;       // Acknowledge bluetooth module
+	uint64_t ack_motorio:8;		// Acknowledge motorio controller
+	uint64_t ack_sensor:8;			// Acknowledge sensor controller
+	uint64_t ack_geo:8;			// Acknowledge geo controller
+	uint64_t ack_bluetooth:8;		// Acknowledge bluetooth module
 
 }__attribute__((__packed__)) master_sync;
 
@@ -88,7 +88,7 @@ typedef struct{
  */
 typedef struct{
 
-    uint64_t counter:8;         // Continuity counter that increments with every beat
+	uint64_t counter:8;			// Continuity counter that increments with every beat
 
 }__attribute__((__packed__)) heart_beat;
 
@@ -102,7 +102,7 @@ typedef struct{
 
 typedef struct{
 
-    uint64_t mode:8;                // Run modes - 1. Navigation mode, 2. Free run mode and 3. Manual mode
+	uint64_t mode:8;				// Run modes - 1. Navigation mode, 2. Free run mode and 3. Manual mode
 
 }__attribute__((__packed__)) run_mode;
 
@@ -113,12 +113,12 @@ typedef struct{
  */
 typedef struct{
 
-    uint64_t front_left:8;          // Front left sensor reading
-    uint64_t front_right:8;     // Front right sensor reading
-    uint64_t front_center:8;        // Front centre sensor reading
-    uint64_t left:8;                // Left sensor reading
-    uint64_t right:8;               // Right sensor reading
-    uint64_t back:8;                // Back sensor reading
+	uint64_t front_left:8;			// Front left sensor reading
+	uint64_t front_right:8;		// Front right sensor reading
+	uint64_t front_center:8;		// Front centre sensor reading
+	uint64_t left:8;				// Left sensor reading
+	uint64_t right:8;				// Right sensor reading
+	uint64_t back:8;				// Back sensor reading
 
 }__attribute__((__packed__)) dist_sensor;
 
@@ -130,8 +130,8 @@ typedef struct{
  */
 typedef struct{
 
-    uint64_t speed:8;               // Indicate speed for DC motor
-    uint64_t turn:8;                // Indicate turn angle for servo motor
+	uint64_t speed:8;				// Indicate speed for DC motor
+	uint64_t turn:8;				// Indicate turn angle for servo motor
 
 }__attribute__((__packed__)) motor_direction;
 
@@ -143,7 +143,7 @@ typedef struct{
  */
 typedef struct{
 
-    uint64_t num_of_points;     // Number of check-points to be loaded
+	uint64_t num_of_points;		// Number of check-points to be loaded
 
 }__attribute__((__packed__)) chk_point_snd;
 
@@ -176,9 +176,9 @@ typedef chk_point_data geo_loc; // use geo_loc instead of chk_point_data
  */
 typedef struct{
 
-    uint64_t speed:8;               // Speed as measured by the GPS sensor
-    uint64_t heading:16;            // Heading from the Geo controller
-    uint64_t bearing:16;            // Bearing calculated by the Geo controller
+	uint64_t speed:8;				// Speed as measured by the GPS sensor
+	uint64_t heading:16;			// Heading from the Geo controller
+	uint64_t bearing:16;			// Bearing calculated by the Geo controller
 
 }__attribute__((__packed__)) geo_spd_angle;
 
@@ -190,8 +190,8 @@ typedef struct{
  */
 typedef struct{
 
-    uint64_t light_sensor:8;        // Light sensor reading
-    uint64_t batt_sensor:8;     // Battery level sensor reading
+	uint64_t light_sensor:8;		// Light sensor reading
+	uint64_t batt_sensor:8;		// Battery level sensor reading
 
 }__attribute__((__packed__)) lght_batt_reading;
 
