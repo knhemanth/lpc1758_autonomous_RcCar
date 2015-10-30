@@ -18,6 +18,14 @@
 
 #define DUMMY_ID                ( 0xFFFF )
 
+#define MASTER_BT_HB_THRESH         ( 128 ) // If bluetooth heartbeat misses too many times, reset
+#define MASTER_GEO_HB_THRESH        ( 32 )
+#define MASTER_SENSOR_HB_THRESH     ( 1 )  // Heart-beats are checked only once a second. If we don't know obstacles for a second its a problem
+#define MASTER_MOTORIO_HB_THRESH    ( 1 )  // Fingers crossed
+#define MASTER_TASK_OVERRUN_DELAY   ( 2000 )
+#define MASTER_CNTL_CAN_DELAY       ( 0 )
+#define MASTER_CNTL_HB_LED          ( 2 )
+
 enum MASTER_ACK {
     NACK = 0,
     ACK
@@ -42,6 +50,7 @@ extern can_std_id_t can_id_loc_data;
 
 /* Function Prototypes */
 bool master_controller_init( void );
+void check_heartbeat( void );
 
 
 #endif /* L5_APPLICATION_MASTER_CONTROLLER_HPP_ */

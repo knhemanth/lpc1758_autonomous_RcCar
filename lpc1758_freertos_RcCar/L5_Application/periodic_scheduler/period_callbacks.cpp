@@ -31,7 +31,7 @@
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
-
+#include "master_controller.hpp"
 
 
 /// This is the stack size used for each of the period tasks
@@ -41,7 +41,7 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 void period_1Hz(void)
 {
-    LE.toggle(1);
+    check_heartbeat();
 }
 
 void period_10Hz(void)

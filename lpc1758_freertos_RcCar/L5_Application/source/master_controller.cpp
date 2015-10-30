@@ -30,17 +30,12 @@ can_std_id_t can_id_chkpt_data;
 can_std_id_t can_id_spd_angle;
 can_std_id_t can_id_loc_data;
 
-/* Static Variables */
-can_fullcan_msg_t* can_msg_motorio_sync_ptr = NULL;
-can_fullcan_msg_t* can_msg_sensor_sync_ptr = NULL;
-can_fullcan_msg_t* can_msg_bluetooth_sync_ptr = NULL;
-can_fullcan_msg_t* can_msg_geo_sync_ptr = NULL;
+
 
 /* Static function prototypes */
 static void power_up_sync_and_ack( void );
 static void bus_off_cb( uint32_t ICR_data );
 static void data_ovr_cb( uint32_t ICR_data );
-
 
 
 bool master_controller_init()
@@ -123,6 +118,11 @@ bool master_controller_init()
 static void power_up_sync_and_ack( void )
 {
     bool ptr_stat = false;
+    can_fullcan_msg_t* can_msg_motorio_sync_ptr = NULL;
+    can_fullcan_msg_t* can_msg_sensor_sync_ptr = NULL;
+    can_fullcan_msg_t* can_msg_bluetooth_sync_ptr = NULL;
+    can_fullcan_msg_t* can_msg_geo_sync_ptr = NULL;
+
 
     do{
         // listen to sync signals from controllers
@@ -216,4 +216,95 @@ static void bus_off_cb( uint32_t ICR_data )
 static void data_ovr_cb( uint32_t ICR_data )
 {
     CAN_reset_bus(MASTER_CNTL_CANBUS);
+}
+
+void check_heartbeat( void ) {
+
+    static uint32_t bluetooth_hb_miss;
+    static uint32_t geo_hb_miss;
+    static uint32_t sensor_hb_miss;
+    static uint32_t motor_hb_miss;
+
+    can_fullcan_msg_t *can_msg_bluetooth_hb_ptr = NULL;
+    can_fullcan_msg_t *can_msg_motorio_hb_ptr = NULL;
+    can_fullcan_msg_t *can_msg_sensor_hb_ptr = NULL;
+    can_fullcan_msg_t *can_msg_geo_hb_ptr = NULL;
+    can_fullcan_msg_t hb_msg;
+
+    bool status = false;
+    bool reset_flag = false;
+
+    can_msg_bluetooth_hb_ptr = CAN_fullcan_get_entry_ptr(can_id_bluetooth_hb);
+    can_msg_motorio_hb_ptr = CAN_fullcan_get_entry_ptr(can_id_motor_hb);
+    can_msg_geo_hb_ptr = CAN_fullcan_get_entry_ptr(can_id_geo_hb);
+    can_msg_sensor_hb_ptr = CAN_fullcan_get_entry_ptr(can_id_sensor_hb);
+
+    status = CAN_fullcan_read_msg_copy(can_msg_bluetooth_hb_ptr, &hb_msg);
+    if( !status ) {
+        LOG_ERROR("Missed a Heartbeat from Bluetooth\n");
+
+        bluetooth_hb_miss++;
+        if( bluetooth_hb_miss >= MASTER_BT_HB_THRESH ){
+            LOG_ERROR("Missed bluetooth heart-beats too many times\n");
+            reset_flag = true;
+        }
+    }
+
+    else{
+        bluetooth_hb_miss = 0;
+    }
+
+
+    status = CAN_fullcan_read_msg_copy(can_msg_geo_hb_ptr, &hb_msg);
+    if( !status ) {
+        LOG_ERROR("Missed a Heartbeat from Geo Controller\n");
+
+        geo_hb_miss++;
+        if( geo_hb_miss >= MASTER_GEO_HB_THRESH ){
+            LOG_ERROR("Missed Geo heart-beats too many times\n");
+            reset_flag = true;
+        }
+    }
+
+    else{
+        geo_hb_miss = 0;
+    }
+
+    status = CAN_fullcan_read_msg_copy(can_msg_motorio_hb_ptr, &hb_msg);
+    if( !status ) {
+        LOG_ERROR("Missed a Heartbeat from MotorIO\n");
+
+        motor_hb_miss++;
+        if( motor_hb_miss >= MASTER_MOTORIO_HB_THRESH ){
+            LOG_ERROR("Missed Motorio heart-beats too many times\n");
+            reset_flag = true;
+        }
+    }
+
+    status = CAN_fullcan_read_msg_copy(can_msg_sensor_hb_ptr, &hb_msg);
+    if( !status ) {
+        LOG_ERROR("Missed a Heartbeat from Sensor controller\n");
+
+        sensor_hb_miss++;
+        if( sensor_hb_miss >= MASTER_SENSOR_HB_THRESH ){
+            LOG_ERROR("Missed Sensor heart-beats too many times\n");
+            reset_flag = true;
+        }
+    }
+
+    if( reset_flag ){
+
+        // Send CAN message to restart
+        can_msg_t can_reset_msg;
+        can_reset_msg.msg_id = RESET_ID;
+        can_reset_msg.frame_fields.is_29bit = false;
+        can_reset_msg.frame_fields.data_len = 0;
+
+        CAN_tx(MASTER_CNTL_CANBUS, &can_reset_msg, MASTER_CNTL_CAN_DELAY);
+
+        // Cause a task overrun and reboot
+        vTaskDelayMs(MASTER_TASK_OVERRUN_DELAY);
+    }
+
+    LE.toggle(MASTER_CNTL_HB_LED);
 }
