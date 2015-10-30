@@ -28,6 +28,7 @@
 #include "geo_controller.hpp"
 #include "io.hpp"
 #include "imu.hpp"
+#include "soft_timer.hpp"
 
 
 /**
@@ -46,6 +47,7 @@
  */
 int main(void)
 {
+    SoftTimer init_timer(GEO_INIT_LED_TIME);
     /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.
@@ -67,13 +69,15 @@ int main(void)
     /* If init failed there is no point in continuing */
     // XXX: Keep trying to sync forever, no point dying here
     // DONE: The init function will try to sync forever. This case should never happen
+    init_timer.reset();
     if( !status )
     {
         LOG_ERROR("ERROR!!!! Geo Controller - This should never happen\n");
         while( 1 )
         {
             LE.toggle(1);
-            vTaskDelayMs(1000);
+            init_timer.restart();
+            while( !init_timer.expired());
         }
     }
 

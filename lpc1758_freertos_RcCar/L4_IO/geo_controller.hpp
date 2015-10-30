@@ -20,6 +20,7 @@
 #define GEO_CNTL_CAN_TIMEOUT        ( 0 )       // Timeout for sending can message
 #define GEO_CNTL_SYNC_TIME          ( 500 )     // Allow 500 ms wait for ack
 #define GEO_CNTL_SYNC_MAX_TIME    ( GEO_CNTL_SYNC_TIME * 20 ) // Wait 10s max
+#define GEO_INIT_LED_TIME           ( 500 )
 
 #define LOG(...)    LOG_ERROR(__VA_ARGS__)
 
