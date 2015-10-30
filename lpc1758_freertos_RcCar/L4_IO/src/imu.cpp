@@ -27,7 +27,7 @@ imu::imu():
     imuResetPin(P2_5),
     readYawCommand{'#', 'f'},
     imu_old_heading(0.0),
-        err_count(0),
+    err_count(0),
     queueHandle(xQueueCreate(IMU_INTERNAL_QUEUE_LENGTH, IMU_BUFFER_SIZE))
 
 {
@@ -100,7 +100,7 @@ bool imu::getYawReadingString(void)
     bool retval = true;
 
     // Flush Uart
-    imuUart.flush();
+    //imuUart.flush();
 
     // Read contents of UART Rx Queue
     if(imuUart.gets(buffer, IMU_BUFFER_SIZE, IMU_READ_TIMEOUT))

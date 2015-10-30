@@ -42,18 +42,36 @@
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 
-
 void period_1Hz(void)
 {
-    /// XXX: Master should send heartbeat ON/oFF
-    // We should toggle one of the LEDs ON/OFF according to it
+    // Heart Beat to Master
+    static heart_beat heartbeat_message; // 1 Byte Data
+    can_msg_t heartbeat_geo_msg; // Can Message
+    bool can_status = false;
+
+    heartbeat_message.counter++; // Increment Heartbeat Count
+
+    heartbeat_geo_msg.msg_id = GEO_HEARTBEAT_ID; // Geo Heartbeat ID
+    heartbeat_geo_msg.frame_fields.is_29bit = 0;
+    heartbeat_geo_msg.frame_fields.data_len = sizeof(heart_beat);
+
+    memcpy((void *)&heartbeat_geo_msg.data.qword, (void *)&heartbeat_message, sizeof(heartbeat_message)); // 1 Byte Data
+
+    can_status = CAN_tx(GEO_CNTL_CANBUS, &heartbeat_geo_msg, GEO_CNTL_CAN_TIMEOUT);
+
+    if( !can_status )
+    {
+        LOG_ERROR("ERROR!!! Geo controller Heartbeat message not sent!!");
+        LE.off(4);
+    }
+    else
+    {
+        LE.toggle(4);
+    }
 }
 
 void period_10Hz(void)
 {
-    // XXX: Don't put a lot of code here, instead call sub routines such as
-    // send_heading()
-    // send_geo();
 
     /*
      * TODO: For GPS team
@@ -62,15 +80,14 @@ void period_10Hz(void)
      */
     geo_send_heading();
     geo_send_gps();
-
 }
 
 void period_100Hz(void)
 {
-
+    /* Nothing will be done here */
 }
 
 void period_1000Hz(void)
 {
-
+    /*Nothing will be done here */
 }
