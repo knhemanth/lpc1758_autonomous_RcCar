@@ -5,6 +5,7 @@
  *      Author: Hemanth K N
  */
 
+#include <string.h>
 #include "master_controller.hpp"
 #include "io.hpp"
 #include "can_msg_id.h"
@@ -29,8 +30,18 @@ can_std_id_t can_id_chkpt_data;
 can_std_id_t can_id_spd_angle;
 can_std_id_t can_id_loc_data;
 
+/* Static Variables */
+can_fullcan_msg_t* can_msg_motorio_sync_ptr = NULL;
+can_fullcan_msg_t* can_msg_sensor_sync_ptr = NULL;
+can_fullcan_msg_t* can_msg_bluetooth_sync_ptr = NULL;
+can_fullcan_msg_t* can_msg_geo_sync_ptr = NULL;
+
 /* Static function prototypes */
-void power_up_sync_and_ack( void );
+static void power_up_sync_and_ack( void );
+static void bus_off_cb( uint32_t ICR_data );
+static void data_ovr_cb( uint32_t ICR_data );
+
+
 
 bool master_controller_init()
 {
@@ -109,9 +120,100 @@ bool master_controller_init()
     return status;
 }
 
-void power_up_sync_and_ack( void )
+static void power_up_sync_and_ack( void )
 {
+    bool ptr_stat = false;
+
+    do{
+        // listen to sync signals from controllers
+        can_msg_motorio_sync_ptr = CAN_fullcan_get_entry_ptr(can_id_motorio);
+        can_msg_sensor_sync_ptr = CAN_fullcan_get_entry_ptr(can_id_sensor);
+        can_msg_bluetooth_sync_ptr = CAN_fullcan_get_entry_ptr(can_id_bluetooth);
+        can_msg_geo_sync_ptr = CAN_fullcan_get_entry_ptr(can_id_geo);
+        ptr_stat = (can_msg_motorio_sync_ptr && can_msg_bluetooth_sync_ptr && can_msg_sensor_sync_ptr && can_msg_geo_sync_ptr);
+    }while(!ptr_stat);
+
+    //sync now
+
+    master_sync master_ack_msg;
+    master_ack_msg.ack_bluetooth = NACK;
+    master_ack_msg.ack_geo = NACK;
+    master_ack_msg.ack_motorio = NACK;
+    master_ack_msg.ack_sensor = NACK;
+
+    bool synced = false;
+    bool status = false;
+    bool motorio_sync = false;
+    bool bluetooth_sync = false;
+    bool geo_sync = false;
+    bool sensor_sync = false;
+
+    can_fullcan_msg_t controller_sync_msg;
+
+    // if you have not received a sync message
+    while(!synced){
 
 
+        if( !motorio_sync ){
+            status = CAN_fullcan_read_msg_copy(can_msg_motorio_sync_ptr, &controller_sync_msg);
+            if(status) {
+                motorio_sync = true;
+                master_ack_msg.ack_motorio = ACK;
+            }
+        }
 
+        if( !bluetooth_sync ){
+            status = CAN_fullcan_read_msg_copy(can_msg_bluetooth_sync_ptr, &controller_sync_msg);
+            if(status) {
+                bluetooth_sync = true;
+                master_ack_msg.ack_bluetooth = ACK;
+            }
+        }
+
+        if( !sensor_sync ) {
+            status = CAN_fullcan_read_msg_copy(can_msg_sensor_sync_ptr, &controller_sync_msg);
+            if(status) {
+                sensor_sync = true;
+                master_ack_msg.ack_sensor = ACK;
+            }
+        }
+
+
+        if( !geo_sync ) {
+            status = CAN_fullcan_read_msg_copy(can_msg_geo_sync_ptr, &controller_sync_msg);
+            if(status) {
+                geo_sync = true;
+                master_ack_msg.ack_geo = ACK;
+            }
+        }
+
+
+        synced = (motorio_sync && bluetooth_sync && geo_sync && sensor_sync);
+
+        can_msg_t can_ack_msg;
+        can_ack_msg.msg_id = MASTER_SYNC_ACK_ID;
+        can_ack_msg.frame_fields.is_29bit = false;
+        can_ack_msg.frame_fields.data_len = sizeof(master_ack_msg);       // Send 8 bytes
+        memcpy( (void *)&(can_ack_msg.data.qword), (void *)&master_ack_msg, sizeof(master_ack_msg) ); // Write all 8 bytes of data at once
+
+        status = CAN_tx(MASTER_CNTL_CANBUS, &can_ack_msg, portMAX_DELAY);
+        if( !status ){
+            LOG_ERROR("ERROR!!! Master controller: Unable to send Sync Ack CAN message\n");
+            LE.on(1);
+        }
+
+        else
+            LE.off(1);
+
+    }
+}
+
+static void bus_off_cb( uint32_t ICR_data )
+{
+    CAN_reset_bus(MASTER_CNTL_CANBUS);
+}
+
+static void data_ovr_cb( uint32_t ICR_data )
+{
+    CAN_reset_bus(MASTER_CNTL_CANBUS);
 }

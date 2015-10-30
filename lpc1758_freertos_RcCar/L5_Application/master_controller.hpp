@@ -8,6 +8,8 @@
 #ifndef L5_APPLICATION_MASTER_CONTROLLER_HPP_
 #define L5_APPLICATION_MASTER_CONTROLLER_HPP_
 
+#include "can.h"
+
 #define MASTER_LED_INIT_TIME    (500)
 #define MASTER_CNTL_CANBUS      (can2)
 #define MASTER_CNTL_BAUD        (100)
@@ -15,6 +17,11 @@
 #define MASTER_CNTL_TXQ         ( 8 )       // Not sure if this will be useful in fullCAN
 
 #define DUMMY_ID                ( 0xFFFF )
+
+enum MASTER_ACK {
+    NACK = 0,
+    ACK
+};
 
 /* Global IDs */
 extern can_std_id_t can_id_kill;
@@ -36,7 +43,5 @@ extern can_std_id_t can_id_loc_data;
 /* Function Prototypes */
 bool master_controller_init( void );
 
-void bus_off_cb( uint32_t ICR_data );
-void data_ovr_cb( uint32_t ICR_data );
 
 #endif /* L5_APPLICATION_MASTER_CONTROLLER_HPP_ */
