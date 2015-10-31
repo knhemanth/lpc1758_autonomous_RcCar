@@ -23,6 +23,7 @@
 #define GEO_INIT_LED_TIME           ( 500 )
 #define GEO_CAN_ERR_LED             ( 1 )
 #define GEO_HB_LED                  ( 4 )
+#define RESET                       ( 1 )
 
 #define LOG(...)    LOG_ERROR(__VA_ARGS__)
 
@@ -42,6 +43,8 @@ extern "C"{
 
 void geo_send_gps();
 void geo_send_heading();
+void geo_send_heartbeat();
+void geo_check_master_reset();
 
 #ifdef __cplusplus
 }

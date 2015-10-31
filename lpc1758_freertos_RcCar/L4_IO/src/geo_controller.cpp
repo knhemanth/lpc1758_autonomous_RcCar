@@ -13,11 +13,13 @@
 #include "can_msg_id.h"
 #include "soft_timer.hpp"
 #include "imu.hpp"
+#include "lpc_sys.h"
 
 
 
 static bool power_up_sync_geo_controller( void );
 static can_std_id_t can_id_sync_ack;       // Ack from master
+static can_std_id_t can_id_rst;
 static float gps_lat = 0;
 static float gps_long = 0;
 static float gps_speed = 0;
@@ -25,9 +27,12 @@ static float gps_speed = 0;
 bool geo_controller_init( void )
 {
     can_std_id_t can_id_loc_update;     // Location update from master
+    can_std_id_t dummy;
     bool status = false;
 
     can_id_sync_ack = CAN_gen_sid(GEO_CNTL_CANBUS, MASTER_SYNC_ACK_ID);
+    can_id_rst = CAN_gen_sid(GEO_CNTL_CANBUS, RESET_ID);
+    dummy = CAN_gen_sid(GEO_CNTL_CANBUS, 0xFFFF );      // Dummy entry for pairing
     can_id_loc_update = CAN_gen_sid(GEO_CNTL_CANBUS, GEO_LOC_UPDATE_ID);
 
 
@@ -41,6 +46,7 @@ bool geo_controller_init( void )
 
     // Setup full can filters
     status = CAN_fullcan_add_entry(GEO_CNTL_CANBUS, can_id_sync_ack, can_id_loc_update);
+    status = CAN_fullcan_add_entry(GEO_CNTL_CANBUS, can_id_rst, dummy);
     if( !status )
     {
         LOG_ERROR("ERROR!!! Cannot add FullCAN entries to GEO controller CAN Bus!!");
@@ -98,8 +104,15 @@ bool power_up_sync_geo_controller( void )
     {
         // Send sync message
         status = CAN_tx(GEO_CNTL_CANBUS, &geo_sync_msg, GEO_CNTL_CAN_TIMEOUT);
+
         if( !status )
+        {
             LOG_ERROR("ERROR!!! Unable to send Geo controller sync message\n");
+            LE.on(GEO_CAN_ERR_LED);
+        }
+
+        else
+            LE.off(GEO_CAN_ERR_LED);
 
         // No need to delay here
         // XXX: Cannot use FreeRTOS functions until the OS runs
@@ -161,11 +174,11 @@ void geo_send_gps( void )
     if( !can_status )
         {
             LOG_ERROR("ERROR!!! Geo controller CAN message: GPS data not sent!!");
-            LE.on(1);
+            LE.on(GEO_CAN_ERR_LED);
         }
 
     else
-        LE.off(1);
+        LE.off(GEO_CAN_ERR_LED);
 
 }
 
@@ -203,11 +216,11 @@ void geo_send_heading( void )
     if( !can_status )
     {
         LOG_ERROR("ERROR!!! Geo controller CAN message: IMU data not sent!!");
-        LE.on(1);
+        LE.on(GEO_CAN_ERR_LED);
     }
 
     else
-        LE.off(1);
+        LE.off(GEO_CAN_ERR_LED);
 }
 
 void geo_send_heartbeat( void )
@@ -230,6 +243,35 @@ void geo_send_heartbeat( void )
     else
     {
         LE.toggle(GEO_HB_LED);
+    }
+}
+
+void geo_check_master_reset( void )
+{
+    // Read reset messages from master
+    can_fullcan_msg_t *can_rst_msg_ptr = NULL;
+    can_fullcan_msg_t can_rst_msg;
+    rst_msg *geo_rst_msg;
+
+    can_rst_msg_ptr = CAN_fullcan_get_entry_ptr(can_id_rst);
+
+    bool status = CAN_fullcan_read_msg_copy(can_rst_msg_ptr, &can_rst_msg);
+
+    if( !status )
+    {
+        LOG_ERROR("ERROR!!! Geo controller - cannot read CAN reset messages\n");
+        LE.on(GEO_CAN_ERR_LED);
+        return;
+    }
+
+    LE.off(GEO_CAN_ERR_LED);
+
+    geo_rst_msg = (rst_msg *)&can_rst_msg;
+
+    if( geo_rst_msg->reset_geo == RESET )
+    {
+        LOG_ERROR("ERROR!!! Received a reset request from master\n");
+        sys_reboot();
     }
 }
 
