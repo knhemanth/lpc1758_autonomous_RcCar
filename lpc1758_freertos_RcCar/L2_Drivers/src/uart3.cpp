@@ -19,7 +19,15 @@
 #include "uart3.hpp"
 #include "LPC17xx.h"     // LPC_UART3_BASE
 #include "sys_config.h"  // sys_get_cpu_clock()
+#include "stdio.h"
+#include "semphr.h"
 
+#define bt_data_len 8
+char rec_str[bt_data_len];
+
+
+//semaphore
+extern SemaphoreHandle_t binary_sem;
 
 
 /**
@@ -32,6 +40,8 @@ extern "C"
 {
     void UART3_IRQHandler()
     {
+        long task_woken = 0;
+        xSemaphoreGiveFromISR(binary_sem, &task_woken);
         Uart3::getInstance().handleInterrupt();
     }
 }
@@ -53,4 +63,34 @@ bool Uart3::init(unsigned int baudRate, int rxQSize, int txQSize)
 Uart3::Uart3() : UartDev((unsigned int*)LPC_UART3_BASE)
 {
     // Nothing to do here other than handing off LPC_UART3_Base address to UART_Base
+}
+
+//uart3 puts() function for string tx on uart3
+
+void Uart3::uart3_puts(const char* c_string)
+{
+char* p = (char*) c_string;
+while(*p)
+{
+uart3_putchar(*p);
+p++;
+}
+uart3_putchar('\n');
+}
+
+
+
+//uart3 gets() function for string rx on uart3
+
+char* Uart3::uart3_gets()
+{
+
+int i = 0;
+do
+{
+rec_str[i] = uart3_getchar();
+i++;
+}while(rec_str[i-1] != '\n');
+return rec_str;
+
 }

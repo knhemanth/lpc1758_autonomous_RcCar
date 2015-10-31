@@ -25,7 +25,23 @@
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
+#include "uart3.hpp"
+#include "stdio.h"
+#include "semphr.h"
+#include "can.h"
+#include "bluetooth_controller.hpp"
+#include "can_msg_id.h"
 
+#define baud_rate 9600
+#define bt_task_mem 1000
+#define bt_rx_size 64
+#define bt_tx_size 64
+#define bt_data_len 8
+
+can_msg_t can_mssg_bt;
+bool sync_stat = false;
+
+SemaphoreHandle_t binary_sem = 0;
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
  * for details.  There is a very simple example towards the beginning of this class's declaration.
@@ -40,6 +56,48 @@
  *        In either case, you should avoid using this bus or interfacing to external components because
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
+
+class bt_uart_task : public scheduler_task
+{
+    public:
+        bt_uart_task(uint8_t priority) :
+            scheduler_task("bt_uart_task", bt_task_mem, priority)
+        {
+        }
+
+        bool init(void)
+        {
+            Uart3 &bt_uart = Uart3::getInstance();
+            bt_uart.init(baud_rate, bt_rx_size, bt_tx_size);
+            can_mssg_bt.msg_id = CHECKPOINT_SEND_ID;
+            can_mssg_bt.frame_fields.data_len = 0;
+            can_mssg_bt.frame_fields.is_29bit = 0;
+
+            return true;
+        }
+
+        bool run(void *p)
+        {
+           if(xSemaphoreTake(binary_sem, 100))
+           {
+           Uart3 &bt_uart = Uart3::getInstance();
+
+
+           char *bt_str;
+           bt_str = bt_uart.uart3_gets();
+           for(int i = 0;i < bt_data_len; i++)
+           {
+               can_mssg_bt.data.bytes[i] = (uint8_t)(*(bt_str + i));
+               can_mssg_bt.data.bytes[i] -= 48;
+               printf("\nval at %d = %d",i,can_mssg_bt.data.bytes[i]);
+           }
+
+               CAN_tx(can2, &can_mssg_bt, 10);
+           }
+           return true;
+        }
+};
+
 int main(void)
 {
     /**
@@ -52,15 +110,17 @@ int main(void)
      * such that it can save remote control codes to non-volatile memory.  IR remote
      * control codes can be learned by typing the "learn" terminal command.
      */
+    //create binary semaphore
+    vSemaphoreCreateBinary(binary_sem);
+
+    sync_stat = bluetooth_controller_sync();
+
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
-    /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
-    #if 0
-    scheduler_add_task(new periodicSchedulerTask());
-    #endif
+    scheduler_add_task(new bt_uart_task(PRIORITY_CRITICAL));
 
     /* The task for the IR receiver */
     // scheduler_add_task(new remoteTask  (PRIORITY_LOW));
@@ -123,6 +183,8 @@ int main(void)
         scheduler_add_task(new wifiTask(Uart3::getInstance(), PRIORITY_LOW));
     #endif
 
-    scheduler_start(); ///< This shouldn't return
+    if(sync_stat ==  true)
+        scheduler_start(); ///< This shouldn't return
+
     return -1;
 }

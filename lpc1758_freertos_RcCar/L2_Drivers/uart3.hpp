@@ -46,6 +46,32 @@ class Uart3 : public UartDev, public SingletonTemplate<Uart3>
          */
         bool init(unsigned int baudRate, int rxQSize=32, int txQSize=64);
 
+
+        //uart3 putchar for character tx
+
+        void uart3_puts(const char* c_string);
+        char* uart3_gets();
+
+
+
+        //uart3 getchar for character rx
+
+        static char uart3_getchar()
+        {
+
+        char c = 0;
+        Uart3::getInstance().getChar(&c);
+        return c;
+
+        }
+
+        static char uart3_putchar(char thechar)
+        {
+
+        return Uart3::getInstance().putChar(thechar);
+        }
+
+
     private:
         Uart3();  ///< Private constructor of this Singleton class
         friend class SingletonTemplate<Uart3>;  ///< Friend class used for Singleton Template
