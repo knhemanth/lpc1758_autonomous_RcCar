@@ -46,15 +46,15 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
-    LE.toggle(2);
+
 }
 
 void period_100Hz(void)
 {
-    LE.toggle(3);
+
 }
 
 void period_1000Hz(void)
 {
-    LE.toggle(4);
+
 }
