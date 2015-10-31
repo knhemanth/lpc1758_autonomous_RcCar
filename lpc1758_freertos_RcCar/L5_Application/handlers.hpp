@@ -25,7 +25,11 @@
 
 #include "command_handler.hpp"
 
+/// Handler for Heart-beat testing
+CMD_HANDLER_FUNC(sendPowerUpSync);
 
+/// Handler for Heart-beat testing
+CMD_HANDLER_FUNC(setHeartbeat);
 
 /// Handler for task list & CPU Information
 CMD_HANDLER_FUNC(taskListHandler);

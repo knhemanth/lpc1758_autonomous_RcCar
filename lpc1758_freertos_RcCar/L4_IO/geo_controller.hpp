@@ -32,7 +32,7 @@
 
 void bus_off_cb( uint32_t icr_data );
 void data_ovr_cb( uint32_t icr_data );
-bool geo_controller_init( void );    // Initialization routing for Geo controller
+bool test_controller_init( void );    // Initialization routing for Geo controller
 
 #ifdef __cplusplus
 extern "C"{

@@ -32,36 +32,103 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "geo_controller.hpp"
-
+#include "can_msg_id.h"
+#include "can.h"
 
 #include <stdio.h>
-
 
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
+bool hb_motor = false;
+bool hb_geo = false;
+bool hb_sensor = false;
+bool hb_bluetooth = false;
 
+bool sync_motor = false;
+bool sync_geo = false;
+bool sync_sensor = false;
+bool sync_bluetooth = false;
+
+void send_can_msg(uint32_t id)
+{
+    can_msg_t msg;
+
+    msg.msg_id = id;
+    msg.frame_fields.is_29bit = 0;
+    msg.frame_fields.data_len = 0;
+    msg.data.qword = 0;
+
+    CAN_tx( can2, &msg, 0);
+
+}
 
 void period_1Hz(void)
 {
-    /// XXX: Master should send heartbeat ON/oFF
-    // We should toggle one of the LEDs ON/OFF according to it
+    // Power Up Sync Simulation
+    if(sync_motor)
+    {
+       send_can_msg(MOTORIO_SYNC_ID);
+       printf("Power Up Sync : Motor Sent!\n");
+
+    }
+
+    if(sync_geo)
+    {
+       send_can_msg(GEO_SYNC_ID);
+       printf("Power Up Sync  : Geo Sent!\n");
+
+    }
+
+    if(sync_sensor)
+    {
+       send_can_msg(SENSOR_SYNC_ID);
+       printf("Power Up Sync  : Sensor Sent!\n");
+
+    }
+
+    if(sync_bluetooth)
+    {
+       send_can_msg(BLUETOOTH_SYNC_ID);
+       printf("Power Up Sync  : Bluetooth Sent!\n");
+
+    }
+
+       // Heartbeat Simulation
+    if(hb_motor)
+    {
+        send_can_msg(MOTORIO_HEARTBEAT_ID);
+        printf("Heart Beat : Motor Sent!\n");
+
+    }
+
+    if(hb_geo)
+    {
+        send_can_msg(GEO_HEARTBEAT_ID);
+        printf("Heart Beat : Geo Sent!\n");
+
+    }
+
+    if(hb_sensor)
+    {
+        send_can_msg(SENSOR_HEARTBEAT_ID);
+        printf("Heart Beat : Sensor Sent!\n");
+
+    }
+
+    if(hb_bluetooth)
+    {
+        send_can_msg(BLUETOOTH_HEARTBEAT_ID);
+        printf("Heart Beat : Bluetooth Sent!\n");
+
+    }
+
 }
 
 void period_10Hz(void)
 {
-    // XXX: Don't put a lot of code here, instead call sub routines such as
-    // send_heading()
-    // send_geo();
 
-    /*
-     * TODO: For GPS team
-     * Don't change the order of these calls.
-     * If you change then call gps getters in both functions
-     */
-    geo_send_heading();
-    geo_send_gps();
 
 }
 

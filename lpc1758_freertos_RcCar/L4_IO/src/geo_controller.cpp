@@ -15,14 +15,13 @@
 #include "imu.hpp"
 
 
-
 static bool power_up_sync_geo_controller( void );
 static can_std_id_t can_id_sync_ack;       // Ack from master
 static float gps_lat = 0;
 static float gps_long = 0;
 static float gps_speed = 0;
 
-bool geo_controller_init( void )
+bool test_controller_init( void )
 {
     can_std_id_t can_id_loc_update;     // Location update from master
     bool status = false;
@@ -49,9 +48,6 @@ bool geo_controller_init( void )
 
     // Enable the bus
     CAN_reset_bus(GEO_CNTL_CANBUS);
-
-    // Sync with the master controller by sending power_up_sync
-    status = power_up_sync_geo_controller();
 
     return status;
 }

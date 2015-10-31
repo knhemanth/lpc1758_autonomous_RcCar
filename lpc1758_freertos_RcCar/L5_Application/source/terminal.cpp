@@ -70,6 +70,11 @@ bool terminalTask::taskEntry()
     /* remoteTask() creates shared object in its init(), so we can get it now */
     CommandProcessor &cp = mCmdProc;
 
+    // Rc Car command handlers
+    cp.addHandler(setHeartbeat, "sendhb", "Start heart-beats: Check code for options [0-9]");
+    cp.addHandler(sendPowerUpSync, "psync", "Start Power Sync: Check code for options [0-9]");
+
+
     // System information handlers
     cp.addHandler(taskListHandler, "info",    "Task/CPU Info.  Use 'info 200' to get CPU during 200ms");
     cp.addHandler(memInfoHandler,  "meminfo", "See memory info");

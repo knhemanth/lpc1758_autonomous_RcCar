@@ -45,6 +45,176 @@
 #include "c_tlm_stream.h"
 #include "c_tlm_var.h"
 
+#if 1 // TEST_APP
+
+extern bool hb_motor;
+extern bool hb_geo;
+extern bool hb_sensor;
+extern bool hb_bluetooth;
+
+extern bool sync_motor;
+extern bool sync_geo;
+extern bool sync_sensor;
+extern bool sync_bluetooth;
+
+CMD_HANDLER_FUNC(sendPowerUpSync)
+{
+    char opt = 0;
+
+    printf("\n0 - All Sync On\n");
+    printf("1 - Motor Sync On\n");
+    printf("2 - Geo Sync On\n");
+    printf("3 - Sensor Sync On\n");
+    printf("4 - Bluetooth Sync On\n");
+    printf("5 - All Sync Off\n");
+    printf("6 - Motor Sync Off\n");
+    printf("7 - Geo Sync Off\n");
+    printf("8 - Sensor Sync Off\n");
+    printf("8 - Bluetooth Sync Off\n\n");
+
+    opt = getchar();
+
+    switch(opt)
+    {
+        case '0':
+            printf("Sending All Controller Power Sync\n");
+            sync_motor = true;
+            sync_geo = true;
+            sync_sensor = true;
+            sync_bluetooth = true;
+            break;
+
+        case '1':
+            printf("Sending motor Power Sync\n");
+            sync_motor = true;
+            break;
+
+        case '2':
+            printf("Sending geo Power Sync\n");
+            sync_geo = true;
+            break;
+
+        case '3':
+            printf("Sending sensor Power Sync\n");
+            sync_sensor = true;
+            break;
+
+        case '4':
+            printf("Sending bluetooth Power Sync\n");
+            sync_bluetooth = true;
+            break;
+
+        case '5':
+            printf("Turn off all Powersyncs\n");
+            sync_motor = false;
+            sync_geo = false;
+            sync_sensor = false;
+            sync_bluetooth = false;
+            break;
+
+        case '6':
+            printf("Turned off motor Power Sync\n");
+            sync_motor = false;
+            break;
+
+        case '7':
+            printf("Turned off geo Power Sync\n");
+            sync_geo = false;
+            break;
+
+        case '8':
+            printf("Turned off sensor Power Sync\n");
+            sync_sensor = false;
+            break;
+
+        case '9':
+            printf("Turned off bluetooth Power Sync\n");
+            sync_bluetooth = false;
+            break;
+    }
+}
+
+
+CMD_HANDLER_FUNC(setHeartbeat)
+{
+    char opt = 0;
+
+    printf("\n0 - All HB On\n");
+    printf("1 - Motor HB On\n");
+    printf("2 - Geo HB On\n");
+    printf("3 - Sensor HB On\n");
+    printf("4 - Bluetooth HB On\n");
+    printf("5 - All HB Off\n");
+    printf("6 - Motor HB Off\n");
+    printf("7 - Geo HB Off\n");
+    printf("8 - Sensor HB Off\n");
+    printf("8 - Bluetooth HB Off\n\n");
+
+
+    opt = getchar();
+
+    switch(opt)
+    {
+        case '0':
+            printf("Sending All Controller Heartbeats\n");
+            hb_motor = true;
+            hb_geo = true;
+            hb_sensor = true;
+            hb_bluetooth = true;
+            break;
+
+        case '1':
+            printf("Sending motor Heartbeat\n");
+            hb_motor = true;
+            break;
+
+        case '2':
+            printf("Sending geo Heartbeat\n");
+            hb_geo = true;
+            break;
+
+        case '3':
+            printf("Sending sensor Heartbeat\n");
+            hb_sensor = true;
+            break;
+
+        case '4':
+            printf("Sending bluetooth Heartbeat\n");
+            hb_bluetooth = true;
+            break;
+
+        case '5':
+            printf("Turn off all heartbeats\n");
+            hb_motor = false;
+            hb_geo = false;
+            hb_sensor = false;
+            hb_bluetooth = false;
+            break;
+
+        case '6':
+            printf("Turned off motor Heartbeat\n");
+            hb_motor = false;
+            break;
+
+        case '7':
+            printf("Turned off geo Heartbeat\n");
+            hb_geo = false;
+            break;
+
+        case '8':
+            printf("Turned off sensor Heartbeat\n");
+            hb_sensor = false;
+            break;
+
+        case '9':
+            printf("Turned off bluetooth Heartbeat\n");
+            hb_bluetooth = false;
+            break;
+    }
+
+}
+#endif
+
 
 
 CMD_HANDLER_FUNC(taskListHandler)
