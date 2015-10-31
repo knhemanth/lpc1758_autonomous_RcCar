@@ -249,6 +249,9 @@ void check_heartbeat( void ) {
                 LOG_ERROR("Missed bluetooth heart-beats too many times\n");
                 bluetooth_sync = false;
                 master_rst_msg.reset_bluetooth = RESET;
+
+                // We have reset the controller, so reset the counter too
+                bluetooth_hb_miss = 0;
             }
         }
 
@@ -270,6 +273,7 @@ void check_heartbeat( void ) {
                 LOG_ERROR("Missed Geo heart-beats too many times\n");
                 geo_sync = false;
                 master_rst_msg.reset_geo = RESET;
+                geo_hb_miss = 0;
             }
         }
 
@@ -289,6 +293,7 @@ void check_heartbeat( void ) {
                 LOG_ERROR("Missed Motorio heart-beats too many times\n");
                 motorio_sync = false;
                 master_rst_msg.reset_motorio = RESET;
+                motor_hb_miss = 0;
             }
         }
     }
@@ -304,6 +309,7 @@ void check_heartbeat( void ) {
                 LOG_ERROR("Missed Sensor heart-beats too many times\n");
                 sensor_sync = false;
                 master_rst_msg.reset_sensor = RESET;
+                sensor_hb_miss = 0;
             }
         }
     }
@@ -311,9 +317,9 @@ void check_heartbeat( void ) {
     // Check if anybody needs a reset
     if(
         master_rst_msg.reset_bluetooth == RESET ||
-        master_rst_msg.reset_bluetooth == RESET ||
-        master_rst_msg.reset_bluetooth == RESET ||
-        master_rst_msg.reset_bluetooth == RESET )
+        master_rst_msg.reset_geo == RESET ||
+        master_rst_msg.reset_motorio == RESET ||
+        master_rst_msg.reset_sensor == RESET )
     {
         // Send CAN message to restart
         can_msg_t can_reset_msg;
