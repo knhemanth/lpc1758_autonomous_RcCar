@@ -266,7 +266,7 @@ void geo_check_master_reset( void )
 
     LE.off(GEO_CAN_ERR_LED);
 
-    geo_rst_msg = (rst_msg *)&can_rst_msg;
+    geo_rst_msg = (rst_msg *)&(can_rst_msg.data.bytes[0]);
 
     if( geo_rst_msg->reset_geo == RESET )
     {
