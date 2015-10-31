@@ -210,6 +210,29 @@ void geo_send_heading( void )
         LE.off(1);
 }
 
+void geo_send_heartbeat( void )
+{
+    // Heart Beat to Master
+    can_msg_t heartbeat_geo_msg; // Can Message
+    bool can_status = false;
+
+    heartbeat_geo_msg.msg_id = GEO_HEARTBEAT_ID; // Geo Heartbeat ID
+    heartbeat_geo_msg.frame_fields.is_29bit = 0;
+    heartbeat_geo_msg.frame_fields.data_len = 0;
+
+    can_status = CAN_tx(GEO_CNTL_CANBUS, &heartbeat_geo_msg, GEO_CNTL_CAN_TIMEOUT);
+
+    if( !can_status )
+    {
+        LOG_ERROR("ERROR!!! Geo controller Heartbeat message not sent!!");
+        LE.off(GEO_HB_LED);
+    }
+    else
+    {
+        LE.toggle(GEO_HB_LED);
+    }
+}
+
 #ifdef __cplusplus
 }
 #endif

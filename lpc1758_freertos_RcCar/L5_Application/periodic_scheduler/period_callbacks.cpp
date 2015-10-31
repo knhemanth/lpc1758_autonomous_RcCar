@@ -44,30 +44,7 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 void period_1Hz(void)
 {
-    // Heart Beat to Master
-    static heart_beat heartbeat_message; // 1 Byte Data
-    can_msg_t heartbeat_geo_msg; // Can Message
-    bool can_status = false;
-
-    heartbeat_message.counter++; // Increment Heartbeat Count
-
-    heartbeat_geo_msg.msg_id = GEO_HEARTBEAT_ID; // Geo Heartbeat ID
-    heartbeat_geo_msg.frame_fields.is_29bit = 0;
-    heartbeat_geo_msg.frame_fields.data_len = sizeof(heart_beat);
-
-    memcpy((void *)&heartbeat_geo_msg.data.qword, (void *)&heartbeat_message, sizeof(heartbeat_message)); // 1 Byte Data
-
-    can_status = CAN_tx(GEO_CNTL_CANBUS, &heartbeat_geo_msg, GEO_CNTL_CAN_TIMEOUT);
-
-    if( !can_status )
-    {
-        LOG_ERROR("ERROR!!! Geo controller Heartbeat message not sent!!");
-        LE.off(4);
-    }
-    else
-    {
-        LE.toggle(4);
-    }
+    geo_send_heartbeat();
 }
 
 void period_10Hz(void)

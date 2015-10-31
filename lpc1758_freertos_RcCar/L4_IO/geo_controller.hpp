@@ -21,6 +21,8 @@
 #define GEO_CNTL_SYNC_TIME          ( 500 )     // Allow 500 ms wait for ack
 #define GEO_CNTL_SYNC_MAX_TIME    ( GEO_CNTL_SYNC_TIME * 20 ) // Wait 10s max
 #define GEO_INIT_LED_TIME           ( 500 )
+#define GEO_CAN_ERR_LED             ( 1 )
+#define GEO_HB_LED                  ( 4 )
 
 #define LOG(...)    LOG_ERROR(__VA_ARGS__)
 
