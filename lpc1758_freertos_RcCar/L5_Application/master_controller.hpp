@@ -25,6 +25,10 @@
 #define MASTER_TASK_OVERRUN_DELAY   ( 2000 )
 #define MASTER_CNTL_CAN_DELAY       ( 0 )
 #define MASTER_CNTL_HB_LED          ( 2 )
+#define MASTER_CNTL_NOHB_LED        ( 3 )
+
+#define RESET   ( 1 )
+#define NORESET ( 0 )
 
 enum MASTER_ACK {
     NACK = 0,

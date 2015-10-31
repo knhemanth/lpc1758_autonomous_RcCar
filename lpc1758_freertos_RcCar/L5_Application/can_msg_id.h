@@ -44,13 +44,26 @@ enum CAN_MSG_ID
  *  The following messages have no data fields
  *
  *  1. Kill switch
- *  2. Reset
- *  3. MOTORIO_SYNC
- *  4. SENSOR_SYNC
- *  5. BLUETOOTH_SYNC
- *  6. GEO_SYNC
- *  7. CHECKPOINT_REQ_ID
+ *  2. MOTORIO_SYNC
+ *  3. SENSOR_SYNC
+ *  4. BLUETOOTH_SYNC
+ *  5. GEO_SYNC
+ *  6. CHECKPOINT_REQ_ID
  */
+
+/*
+ * Reset message for each controller
+ * Sent by: Master controller
+ * Received by: All controllers
+ */
+typedef struct{
+
+    uint64_t reset_motorio:8;     // Acknowledge motorio controller
+    uint64_t reset_sensor:8;      // Acknowledge sensor controller
+    uint64_t reset_geo:8;         // Acknowledge geo controller
+    uint64_t reset_bluetooth:8;   // Acknowledge bluetooth module
+
+}__attribute__((__packed__)) rst_msg;
 
 
 /* 
@@ -58,7 +71,7 @@ enum CAN_MSG_ID
  * Sent by: Master controller
  * Received by: All controllers
  */
-typedef struct master_sync_ack{
+typedef struct{
 
     uint64_t ack_motorio:8;     // Acknowledge motorio controller
     uint64_t ack_sensor:8;          // Acknowledge sensor controller
@@ -73,7 +86,7 @@ typedef struct master_sync_ack{
  * Sent by: All controllers
  * Received by: Master controller
  */
-typedef struct heart_beat{
+typedef struct{
 
     uint64_t counter:8;         // Continuity counter that increments with every beat
 
@@ -87,7 +100,7 @@ typedef struct heart_beat{
  * Received by: Master controller
  */
 
-typedef struct run_mode{
+typedef struct{
 
     uint64_t mode:8;                // Run modes - 1. Navigation mode, 2. Free run mode and 3. Manual mode
 
@@ -98,7 +111,7 @@ typedef struct run_mode{
  *  Sent by: Sensor controller
  *  Received by: Master controller
  */
-typedef struct distance_sensor{
+typedef struct{
 
     uint64_t front_left:8;          // Front left sensor reading
     uint64_t front_right:8;     // Front right sensor reading
@@ -115,7 +128,7 @@ typedef struct distance_sensor{
  * Sent by: Master controller 
  * Received by: MotorIO controller
  */
-typedef struct motor_direction{
+typedef struct{
 
     uint64_t speed:8;               // Indicate speed for DC motor
     uint64_t turn:8;                // Indicate turn angle for servo motor
@@ -128,7 +141,7 @@ typedef struct motor_direction{
  * Sent by: Bluetooth module [ After receiving data from Android app ]
  * Received by: Master controller
  */
-typedef struct checkpoint_send{
+typedef struct{
 
     uint64_t num_of_points;     // Number of check-points to be loaded
 
@@ -140,7 +153,7 @@ typedef struct checkpoint_send{
  * Sent by: Bluetooth module
  * Received by: Master controller
  */
-typedef struct checkpoint_data{
+typedef struct{
 
     float latitude;
     float longitude;
@@ -161,7 +174,7 @@ typedef chk_point_data geo_loc; // use geo_loc instead of chk_point_data
  * Sent by: Geo controller
  * Received by: Master controller and IO controller
  */
-typedef struct geo_speed_angle{
+typedef struct{
 
     uint64_t speed:8;               // Speed as measured by the GPS sensor
     uint64_t heading:16;            // Heading from the Geo controller
@@ -175,7 +188,7 @@ typedef struct geo_speed_angle{
  * Sent by: Sensor controller
  * Received by: IO controller
  */
-typedef struct light_battery_sensor{
+typedef struct{
 
     uint64_t light_sensor:8;        // Light sensor reading
     uint64_t batt_sensor:8;     // Battery level sensor reading

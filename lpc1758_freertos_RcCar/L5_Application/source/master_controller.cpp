@@ -30,10 +30,14 @@ can_std_id_t can_id_chkpt_data;
 can_std_id_t can_id_spd_angle;
 can_std_id_t can_id_loc_data;
 
-
+/* Static variables */
+static bool motorio_sync = false;
+static bool bluetooth_sync = false;
+static bool geo_sync = false;
+static bool sensor_sync = false;
 
 /* Static function prototypes */
-static void power_up_sync_and_ack( void );
+static bool power_up_sync_and_ack( void );
 static void bus_off_cb( uint32_t ICR_data );
 static void data_ovr_cb( uint32_t ICR_data );
 
@@ -110,91 +114,79 @@ bool master_controller_init()
     //reset the can bus to enable it now
     CAN_reset_bus(MASTER_CNTL_CANBUS);
 
-    power_up_sync_and_ack();
+    while( !( power_up_sync_and_ack() ) );
 
     return status;
 }
 
-static void power_up_sync_and_ack( void )
+static bool power_up_sync_and_ack( void )
 {
-    bool ptr_stat = false;
     can_fullcan_msg_t* can_msg_motorio_sync_ptr = NULL;
     can_fullcan_msg_t* can_msg_sensor_sync_ptr = NULL;
     can_fullcan_msg_t* can_msg_bluetooth_sync_ptr = NULL;
     can_fullcan_msg_t* can_msg_geo_sync_ptr = NULL;
 
-
-    do{
-        // listen to sync signals from controllers
-        can_msg_motorio_sync_ptr = CAN_fullcan_get_entry_ptr(can_id_motorio);
-        can_msg_sensor_sync_ptr = CAN_fullcan_get_entry_ptr(can_id_sensor);
-        can_msg_bluetooth_sync_ptr = CAN_fullcan_get_entry_ptr(can_id_bluetooth);
-        can_msg_geo_sync_ptr = CAN_fullcan_get_entry_ptr(can_id_geo);
-        ptr_stat = (can_msg_motorio_sync_ptr && can_msg_bluetooth_sync_ptr && can_msg_sensor_sync_ptr && can_msg_geo_sync_ptr);
-    }while(!ptr_stat);
+    can_msg_motorio_sync_ptr = CAN_fullcan_get_entry_ptr(can_id_motorio);
+    can_msg_sensor_sync_ptr = CAN_fullcan_get_entry_ptr(can_id_sensor);
+    can_msg_bluetooth_sync_ptr = CAN_fullcan_get_entry_ptr(can_id_bluetooth);
+    can_msg_geo_sync_ptr = CAN_fullcan_get_entry_ptr(can_id_geo);
 
     //sync now
-
     master_sync master_ack_msg;
-    master_ack_msg.ack_bluetooth = NACK;
-    master_ack_msg.ack_geo = NACK;
-    master_ack_msg.ack_motorio = NACK;
-    master_ack_msg.ack_sensor = NACK;
+    master_ack_msg.ack_bluetooth = (bluetooth_sync)?ACK:NACK;
+    master_ack_msg.ack_geo = (geo_sync)?ACK:NACK;
+    master_ack_msg.ack_motorio = (motorio_sync)?ACK:NACK;
+    master_ack_msg.ack_sensor = (sensor_sync)?ACK:NACK;
 
     bool synced = false;
     bool status = false;
-    bool motorio_sync = false;
-    bool bluetooth_sync = false;
-    bool geo_sync = false;
-    bool sensor_sync = false;
+
 
     can_fullcan_msg_t controller_sync_msg;
 
-    // if you have not received a sync message
-    while(!synced){
-
-
-        if( !motorio_sync ){
-            status = CAN_fullcan_read_msg_copy(can_msg_motorio_sync_ptr, &controller_sync_msg);
-            if(status) {
-                motorio_sync = true;
-                master_ack_msg.ack_motorio = ACK;
-            }
+    if( !motorio_sync ){
+        status = CAN_fullcan_read_msg_copy(can_msg_motorio_sync_ptr, &controller_sync_msg);
+        if(status) {
+            motorio_sync = true;
+            master_ack_msg.ack_motorio = ACK;
         }
+    }
 
-        if( !bluetooth_sync ){
-            status = CAN_fullcan_read_msg_copy(can_msg_bluetooth_sync_ptr, &controller_sync_msg);
-            if(status) {
-                bluetooth_sync = true;
-                master_ack_msg.ack_bluetooth = ACK;
-            }
+    if( !bluetooth_sync ){
+        status = CAN_fullcan_read_msg_copy(can_msg_bluetooth_sync_ptr, &controller_sync_msg);
+        if(status) {
+            bluetooth_sync = true;
+            master_ack_msg.ack_bluetooth = ACK;
         }
+    }
 
-        if( !sensor_sync ) {
-            status = CAN_fullcan_read_msg_copy(can_msg_sensor_sync_ptr, &controller_sync_msg);
-            if(status) {
-                sensor_sync = true;
-                master_ack_msg.ack_sensor = ACK;
-            }
+    if( !sensor_sync ) {
+        status = CAN_fullcan_read_msg_copy(can_msg_sensor_sync_ptr, &controller_sync_msg);
+        if(status) {
+            sensor_sync = true;
+            master_ack_msg.ack_sensor = ACK;
         }
+    }
 
 
-        if( !geo_sync ) {
-            status = CAN_fullcan_read_msg_copy(can_msg_geo_sync_ptr, &controller_sync_msg);
-            if(status) {
-                geo_sync = true;
-                master_ack_msg.ack_geo = ACK;
-            }
+    if( !geo_sync ) {
+        status = CAN_fullcan_read_msg_copy(can_msg_geo_sync_ptr, &controller_sync_msg);
+        if(status) {
+            geo_sync = true;
+            master_ack_msg.ack_geo = ACK;
         }
+    }
 
+    synced = (motorio_sync && bluetooth_sync && geo_sync && sensor_sync);
 
-        synced = (motorio_sync && bluetooth_sync && geo_sync && sensor_sync);
-
+    if( synced )
+    {
         can_msg_t can_ack_msg;
         can_ack_msg.msg_id = MASTER_SYNC_ACK_ID;
         can_ack_msg.frame_fields.is_29bit = false;
         can_ack_msg.frame_fields.data_len = sizeof(master_ack_msg);       // Send 8 bytes
         memcpy( (void *)&(can_ack_msg.data.qword), (void *)&master_ack_msg, sizeof(master_ack_msg) ); // Write all 8 bytes of data at once
+
 
         status = CAN_tx(MASTER_CNTL_CANBUS, &can_ack_msg, portMAX_DELAY);
         if( !status ){
@@ -204,8 +196,9 @@ static void power_up_sync_and_ack( void )
 
         else
             LE.off(1);
-
     }
+
+    return synced;
 }
 
 static void bus_off_cb( uint32_t ICR_data )
@@ -231,80 +224,115 @@ void check_heartbeat( void ) {
     can_fullcan_msg_t *can_msg_geo_hb_ptr = NULL;
     can_fullcan_msg_t hb_msg;
 
+    rst_msg master_rst_msg;
+
+    master_rst_msg.reset_bluetooth = NORESET;
+    master_rst_msg.reset_geo = NORESET;
+    master_rst_msg.reset_motorio = NORESET;
+    master_rst_msg.reset_sensor = NORESET;
+
     bool status = false;
-    bool reset_flag = false;
 
     can_msg_bluetooth_hb_ptr = CAN_fullcan_get_entry_ptr(can_id_bluetooth_hb);
     can_msg_motorio_hb_ptr = CAN_fullcan_get_entry_ptr(can_id_motor_hb);
     can_msg_geo_hb_ptr = CAN_fullcan_get_entry_ptr(can_id_geo_hb);
     can_msg_sensor_hb_ptr = CAN_fullcan_get_entry_ptr(can_id_sensor_hb);
 
-    status = CAN_fullcan_read_msg_copy(can_msg_bluetooth_hb_ptr, &hb_msg);
-    if( !status ) {
-        LOG_ERROR("Missed a Heartbeat from Bluetooth\n");
+    if( bluetooth_sync )
+    {
+        status = CAN_fullcan_read_msg_copy(can_msg_bluetooth_hb_ptr, &hb_msg);
+        if( !status ) {
+            LOG_ERROR("Missed a Heartbeat from Bluetooth\n");
 
-        bluetooth_hb_miss++;
-        if( bluetooth_hb_miss >= MASTER_BT_HB_THRESH ){
-            LOG_ERROR("Missed bluetooth heart-beats too many times\n");
-            reset_flag = true;
+            bluetooth_hb_miss++;
+            if( bluetooth_hb_miss >= MASTER_BT_HB_THRESH ){
+                LOG_ERROR("Missed bluetooth heart-beats too many times\n");
+                bluetooth_sync = false;
+                master_rst_msg.reset_bluetooth = RESET;
+            }
+        }
+
+        else{
+            bluetooth_hb_miss = 0;
         }
     }
 
-    else{
-        bluetooth_hb_miss = 0;
-    }
 
 
-    status = CAN_fullcan_read_msg_copy(can_msg_geo_hb_ptr, &hb_msg);
-    if( !status ) {
-        LOG_ERROR("Missed a Heartbeat from Geo Controller\n");
+    if( geo_sync )
+    {
+        status = CAN_fullcan_read_msg_copy(can_msg_geo_hb_ptr, &hb_msg);
+        if( !status ) {
+            LOG_ERROR("Missed a Heartbeat from Geo Controller\n");
 
-        geo_hb_miss++;
-        if( geo_hb_miss >= MASTER_GEO_HB_THRESH ){
-            LOG_ERROR("Missed Geo heart-beats too many times\n");
-            reset_flag = true;
+            geo_hb_miss++;
+            if( geo_hb_miss >= MASTER_GEO_HB_THRESH ){
+                LOG_ERROR("Missed Geo heart-beats too many times\n");
+                geo_sync = false;
+                master_rst_msg.reset_geo = RESET;
+            }
+        }
+
+        else{
+            geo_hb_miss = 0;
         }
     }
 
-    else{
-        geo_hb_miss = 0;
-    }
+    if( motorio_sync )
+    {
+        status = CAN_fullcan_read_msg_copy(can_msg_motorio_hb_ptr, &hb_msg);
+        if( !status ) {
+            LOG_ERROR("Missed a Heartbeat from MotorIO\n");
 
-    status = CAN_fullcan_read_msg_copy(can_msg_motorio_hb_ptr, &hb_msg);
-    if( !status ) {
-        LOG_ERROR("Missed a Heartbeat from MotorIO\n");
-
-        motor_hb_miss++;
-        if( motor_hb_miss >= MASTER_MOTORIO_HB_THRESH ){
-            LOG_ERROR("Missed Motorio heart-beats too many times\n");
-            reset_flag = true;
+            motor_hb_miss++;
+            if( motor_hb_miss >= MASTER_MOTORIO_HB_THRESH ){
+                LOG_ERROR("Missed Motorio heart-beats too many times\n");
+                motorio_sync = false;
+                master_rst_msg.reset_motorio = RESET;
+            }
         }
     }
 
-    status = CAN_fullcan_read_msg_copy(can_msg_sensor_hb_ptr, &hb_msg);
-    if( !status ) {
-        LOG_ERROR("Missed a Heartbeat from Sensor controller\n");
+    if( sensor_sync )
+    {
+        status = CAN_fullcan_read_msg_copy(can_msg_sensor_hb_ptr, &hb_msg);
+        if( !status ) {
+            LOG_ERROR("Missed a Heartbeat from Sensor controller\n");
 
-        sensor_hb_miss++;
-        if( sensor_hb_miss >= MASTER_SENSOR_HB_THRESH ){
-            LOG_ERROR("Missed Sensor heart-beats too many times\n");
-            reset_flag = true;
+            sensor_hb_miss++;
+            if( sensor_hb_miss >= MASTER_SENSOR_HB_THRESH ){
+                LOG_ERROR("Missed Sensor heart-beats too many times\n");
+                sensor_sync = false;
+                master_rst_msg.reset_sensor = RESET;
+            }
         }
     }
 
-    if( reset_flag ){
-
+    // Check if anybody needs a reset
+    if(
+        master_rst_msg.reset_bluetooth == RESET ||
+        master_rst_msg.reset_bluetooth == RESET ||
+        master_rst_msg.reset_bluetooth == RESET ||
+        master_rst_msg.reset_bluetooth == RESET )
+    {
         // Send CAN message to restart
         can_msg_t can_reset_msg;
         can_reset_msg.msg_id = RESET_ID;
         can_reset_msg.frame_fields.is_29bit = false;
-        can_reset_msg.frame_fields.data_len = 0;
+        can_reset_msg.frame_fields.data_len = sizeof(rst_msg);
+        memcpy(&can_reset_msg.data.qword, &master_rst_msg, sizeof(rst_msg));
 
         CAN_tx(MASTER_CNTL_CANBUS, &can_reset_msg, MASTER_CNTL_CAN_DELAY);
-
-        // Cause a task overrun and reboot
-        vTaskDelayMs(MASTER_TASK_OVERRUN_DELAY);
     }
+
+    if( !motorio_sync || !sensor_sync || !bluetooth_sync || !geo_sync )
+    {
+        power_up_sync_and_ack();
+        LE.on(MASTER_CNTL_NOHB_LED);
+    }
+
+    else
+        LE.off(MASTER_CNTL_NOHB_LED);
 
     LE.toggle(MASTER_CNTL_HB_LED);
 }
