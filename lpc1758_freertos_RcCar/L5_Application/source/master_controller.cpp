@@ -238,79 +238,106 @@ void check_heartbeat( void ) {
     can_msg_geo_hb_ptr = CAN_fullcan_get_entry_ptr(can_id_geo_hb);
     can_msg_sensor_hb_ptr = CAN_fullcan_get_entry_ptr(can_id_sensor_hb);
 
-    if( bluetooth_sync )
-    {
-        status = CAN_fullcan_read_msg_copy(can_msg_bluetooth_hb_ptr, &hb_msg);
-        if( !status ) {
-            LOG_ERROR("Missed a Heartbeat from Bluetooth\n");
 
-            bluetooth_hb_miss++;
-            if( bluetooth_hb_miss >= MASTER_BT_HB_THRESH ){
-                LOG_ERROR("Missed bluetooth heart-beats too many times\n");
-                bluetooth_sync = false;
-                master_rst_msg.reset_bluetooth = RESET;
+    /*
+     * Check the heart-beat message. Two things can happen
+     *
+     * 1. Master controller has requested one of the controllers to reset.
+     *    The controller has missed the reset message due to whatever caused it
+     *    to stop its heart-beats. Now it gets back up [without resetting] and
+     *    starts sending the heart-beats. So master at this point should say, you are
+     *    out of sync and missed your reset message. So reset again.
+     *
+     *    ???: OR should we just take the heart-beat and say he's synced?
+     *
+     * 2. Master has not requested a reset of any controller. So he checks
+     *    the heart-beat and proceeds further.
+     */
 
-                // We have reset the controller, so reset the counter too
-                bluetooth_hb_miss = 0;
-            }
-        }
+    status = CAN_fullcan_read_msg_copy(can_msg_bluetooth_hb_ptr, &hb_msg);
+    if( !status ) {
+        LOG_ERROR("Missed a Heartbeat from Bluetooth\n");
+        bluetooth_hb_miss++;
 
-        else{
+        if( bluetooth_hb_miss >= MASTER_BT_HB_THRESH ){
+            LOG_ERROR("Missed bluetooth heart-beats too many times\n");
+            bluetooth_sync = false;
+            master_rst_msg.reset_bluetooth = RESET;
+
+            // We have reset the controller, so reset the counter too
             bluetooth_hb_miss = 0;
         }
     }
 
+    else{
 
-
-    if( geo_sync )
-    {
-        status = CAN_fullcan_read_msg_copy(can_msg_geo_hb_ptr, &hb_msg);
-        if( !status ) {
-            LOG_ERROR("Missed a Heartbeat from Geo Controller\n");
-
-            geo_hb_miss++;
-            if( geo_hb_miss >= MASTER_GEO_HB_THRESH ){
-                LOG_ERROR("Missed Geo heart-beats too many times\n");
-                geo_sync = false;
-                master_rst_msg.reset_geo = RESET;
-                geo_hb_miss = 0;
-            }
+        if( bluetooth_sync ){
+            bluetooth_hb_miss = 0;
         }
 
-        else{
+        else    // Here we are getting heart-beats in spite of being out of sync
+            master_rst_msg.reset_bluetooth = RESET;
+    }
+
+
+
+    status = CAN_fullcan_read_msg_copy(can_msg_geo_hb_ptr, &hb_msg);
+    if( !status ) {
+        LOG_ERROR("Missed a Heartbeat from Geo Controller\n");
+        geo_hb_miss++;
+
+        if( geo_hb_miss >= MASTER_GEO_HB_THRESH ){
+            LOG_ERROR("Missed Geo heart-beats too many times\n");
+            geo_sync = false;
+            master_rst_msg.reset_geo = RESET;
             geo_hb_miss = 0;
         }
     }
 
-    if( motorio_sync )
-    {
-        status = CAN_fullcan_read_msg_copy(can_msg_motorio_hb_ptr, &hb_msg);
-        if( !status ) {
-            LOG_ERROR("Missed a Heartbeat from MotorIO\n");
+    else{
+        if( geo_sync ){
+            geo_hb_miss = 0;
+        }
 
-            motor_hb_miss++;
-            if( motor_hb_miss >= MASTER_MOTORIO_HB_THRESH ){
-                LOG_ERROR("Missed Motorio heart-beats too many times\n");
-                motorio_sync = false;
-                master_rst_msg.reset_motorio = RESET;
-                motor_hb_miss = 0;
-            }
+        else
+            master_rst_msg.reset_geo = RESET;
+    }
+
+    status = CAN_fullcan_read_msg_copy(can_msg_motorio_hb_ptr, &hb_msg);
+    if( !status ) {
+        LOG_ERROR("Missed a Heartbeat from MotorIO\n");
+
+        motor_hb_miss++;
+        if( motor_hb_miss >= MASTER_MOTORIO_HB_THRESH ){
+            LOG_ERROR("Missed Motorio heart-beats too many times\n");
+            motorio_sync = false;
+            master_rst_msg.reset_motorio = RESET;
+            motor_hb_miss = 0;
         }
     }
 
-    if( sensor_sync )
-    {
-        status = CAN_fullcan_read_msg_copy(can_msg_sensor_hb_ptr, &hb_msg);
-        if( !status ) {
-            LOG_ERROR("Missed a Heartbeat from Sensor controller\n");
+    else{
+        if( !motorio_sync ){
+            master_rst_msg.reset_motorio = RESET;
+        }
+    }
 
-            sensor_hb_miss++;
-            if( sensor_hb_miss >= MASTER_SENSOR_HB_THRESH ){
-                LOG_ERROR("Missed Sensor heart-beats too many times\n");
-                sensor_sync = false;
-                master_rst_msg.reset_sensor = RESET;
-                sensor_hb_miss = 0;
-            }
+    status = CAN_fullcan_read_msg_copy(can_msg_sensor_hb_ptr, &hb_msg);
+    if( !status ) {
+        LOG_ERROR("Missed a Heartbeat from Sensor controller\n");
+
+        sensor_hb_miss++;
+        if( sensor_hb_miss >= MASTER_SENSOR_HB_THRESH ){
+            LOG_ERROR("Missed Sensor heart-beats too many times\n");
+            sensor_sync = false;
+            master_rst_msg.reset_sensor = RESET;
+            sensor_hb_miss = 0;
+        }
+    }
+
+    else{
+        if( !sensor_sync ){
+            master_rst_msg.reset_sensor = RESET;
         }
     }
 
@@ -321,7 +348,7 @@ void check_heartbeat( void ) {
         master_rst_msg.reset_motorio == RESET ||
         master_rst_msg.reset_sensor == RESET )
     {
-        // Send CAN message to restart
+        // Send CAN message to reset the controllers
         can_msg_t can_reset_msg;
         can_reset_msg.msg_id = RESET_ID;
         can_reset_msg.frame_fields.is_29bit = false;
