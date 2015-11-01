@@ -365,7 +365,8 @@ void check_heartbeat( void ) {
     }
 
     else
+    {
         LE.off(MASTER_CNTL_NOHB_LED);
-
-    LE.toggle(MASTER_CNTL_HB_LED);
+        LE.toggle(MASTER_CNTL_HB_LED);
+    }
 }
