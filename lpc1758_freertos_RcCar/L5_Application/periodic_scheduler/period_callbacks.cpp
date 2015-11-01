@@ -44,6 +44,7 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 void period_1Hz(void)
 {
+
     geo_send_heartbeat();
     geo_check_master_reset();
 }

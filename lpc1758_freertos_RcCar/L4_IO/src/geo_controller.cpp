@@ -23,7 +23,7 @@ static can_std_id_t can_id_rst;
 static float gps_lat = 0;
 static float gps_long = 0;
 static float gps_speed = 0;
-
+static bool bus_off_flag = false;
 bool geo_controller_init( void )
 {
     can_std_id_t can_id_loc_update;     // Location update from master
@@ -45,8 +45,8 @@ bool geo_controller_init( void )
     }
 
     // Setup full can filters
-    status = CAN_fullcan_add_entry(GEO_CNTL_CANBUS, can_id_sync_ack, can_id_loc_update);
-    status = CAN_fullcan_add_entry(GEO_CNTL_CANBUS, can_id_rst, dummy);
+    status = CAN_fullcan_add_entry(GEO_CNTL_CANBUS, can_id_rst, can_id_sync_ack);
+    status = CAN_fullcan_add_entry(GEO_CNTL_CANBUS, can_id_loc_update, dummy);
     if( !status )
     {
         LOG_ERROR("ERROR!!! Cannot add FullCAN entries to GEO controller CAN Bus!!");
@@ -67,7 +67,7 @@ void bus_off_cb( uint32_t icr_data )
     // XXX: This callback occurs from inside an ISR, so cannot log or print anything
     // Also, bus reset should happen at maybe 1 or 10Hz, but not immediately
     //LOG_ERROR("ERROR!!! GEO Controller CAN bus in off state. Resetting bus");
-    CAN_reset_bus(GEO_CNTL_CANBUS);
+    bus_off_flag = true;
 }
 
 void data_ovr_cb( uint32_t icr_data )
@@ -244,6 +244,11 @@ void geo_send_heartbeat( void )
     {
         LE.toggle(GEO_HB_LED);
     }
+
+    if(bus_off_flag) {
+        CAN_reset_bus(GEO_CNTL_CANBUS);
+        bus_off_flag = false;
+    }
 }
 
 void geo_check_master_reset( void )
@@ -258,11 +263,7 @@ void geo_check_master_reset( void )
     bool status = CAN_fullcan_read_msg_copy(can_rst_msg_ptr, &can_rst_msg);
 
     if( !status )
-    {
-        LOG_ERROR("ERROR!!! Geo controller - cannot read CAN reset messages\n");
-        LE.on(GEO_CAN_ERR_LED);
-        return;
-    }
+        return;         // There is no reset message
 
     LE.off(GEO_CAN_ERR_LED);
 
@@ -270,6 +271,7 @@ void geo_check_master_reset( void )
 
     if( geo_rst_msg->reset_geo == RESET )
     {
+
         LOG_ERROR("ERROR!!! Received a reset request from master\n");
         sys_reboot();
     }
