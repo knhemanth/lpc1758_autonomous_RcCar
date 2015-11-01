@@ -26,6 +26,7 @@
 #include "semphr.h"
 #include "projdefs.h"
 #include "file_logger.h"
+#include "stdio.h"
 
 
 /* Custom Debug Print Function */
@@ -120,11 +121,11 @@ class Sensor_Filter
 
     public:
 
-        Sensor_Filter(uint32_t bufSize):
+        Sensor_Filter(uint32_t bufSize = 5):
             cBuf(bufSize),
             currentAverage(0),
             stableStream(false)
-
+            //bufSize = 5 => To comply Ultra_Sonic_4ping's constructor
         {
             filterAccess = xSemaphoreCreateMutex();
             /* Nothing to be done */
@@ -233,6 +234,36 @@ class UsonicFrontSensor : public UltrasonicSensor, public SingletonTemplate<Uson
         friend class SingletonTemplate<UsonicFrontSensor>;
 
 };
+
+//Divya editing UltraSonic Ping sensor (4 pin)
+class Ultra_Sonic_4ping
+{
+    public ://constructor for a 4-pin ping sensor
+            Ultra_Sonic_4ping( LPC1758_GPIO_Type trig_pin, LPC1758_GPIO_Type echo_pin );//,uint32_t size);
+            bool send_trig();
+            static void echo_high_callback(void );  //Callback function for the Rising edge
+            static void echo_low_callback(void );   //Callback function for the falling edge
+            static float ping_get_from_filter(void);//
+            bool recieve_from_queue(void);          //Returns a false if the queue is empty
+                                                    //Returns a true if the queue is returning
+            float get_buffer_value();               //Returns a float buffer in which the queue element is being put
+            static void add_queue_value_to_filter(float );//Add the queue value to the filter
+
+    private :
+             GPIO trig_out;
+             GPIO echo_in;
+             static SemaphoreHandle_t Trig_Sem;
+             static Sensor_Filter <double, double> avg_filter;
+             //Parameters for ping callbacks functions
+             static uint64_t up_time;
+             static float distance_value;
+             static uint64_t down_time;
+             static uint32_t  diff_time;
+             //Queue for sharing the distance values
+             static QueueHandle_t xQueue1,xQueue2,xQueue3;
+             float buff_for_recieve;
+};
+
 
 // Macro to get Singleton Instance
 #define US_FRONT UsonicFrontSensor::getInstance()

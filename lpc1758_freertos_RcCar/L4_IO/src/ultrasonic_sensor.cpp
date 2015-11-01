@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include "ultrasonic_sensor.hpp"
 #include "adc0.h"
+#include "utilities.h" // for TIME_US() in PING
+#include "eint.h"   //for EINT3XXXXXX used in PING
 
 /* TogglePower
  * This function allows the caller to turn the sensor on or off.
@@ -74,4 +76,95 @@ float UltrasonicSensor::GetFilteredRangeValue(void)
         return avg_filter.getValue();
     }
     return 0;
+}
+
+
+//UltraSonic ping 4-pin sensor Divya editing
+
+SemaphoreHandle_t Ultra_Sonic_4ping :: Trig_Sem;//indicating the static variables created in .hpp file belong to this class
+uint64_t  Ultra_Sonic_4ping :: up_time;
+uint64_t Ultra_Sonic_4ping :: down_time;
+uint32_t Ultra_Sonic_4ping :: diff_time;
+float  Ultra_Sonic_4ping :: distance_value;
+Sensor_Filter <double, double> Ultra_Sonic_4ping:: avg_filter;
+QueueHandle_t Ultra_Sonic_4ping:: xQueue1;//xQueue2,xQueue3;
+
+
+//Constructor for the 4-pin ping sensor
+Ultra_Sonic_4ping :: Ultra_Sonic_4ping( LPC1758_GPIO_Type pTrig_out_pin,  LPC1758_GPIO_Type pEcho_in_pin)://, uint32_t pfilterSize = 5):
+    trig_out(pTrig_out_pin),
+    echo_in(pEcho_in_pin)
+
+{
+   Trig_Sem = xSemaphoreCreateBinary();  //first give the Sem at initialization
+   xSemaphoreGive(Trig_Sem);             //send trig() will first check if its taken
+   eint3_enable_port2(1,eint_rising_edge,echo_high_callback);
+   eint3_enable_port2(1,eint_falling_edge,echo_low_callback);
+   trig_out.setAsOutput();
+   echo_in.setAsInput();
+   xQueue1 = xQueueCreate(2,sizeof(float));
+}
+
+bool Ultra_Sonic_4ping ::send_trig()
+{
+    if( xSemaphoreTake(Trig_Sem,0))
+    {
+        //reset the GPIO pins
+        trig_out.set(false);
+        delay_us(5);
+
+        trig_out.setHigh();
+        delay_us(10);
+       trig_out.setLow();
+
+    }
+    return true;
+}
+
+void Ultra_Sonic_4ping :: echo_high_callback()
+{
+
+    up_time = sys_get_uptime_us();
+}
+
+void Ultra_Sonic_4ping :: echo_low_callback()
+{
+    down_time = sys_get_uptime_us();
+
+    //Calculate the time of the ECHO pulse
+
+    diff_time = down_time - up_time;
+
+    distance_value = (float)(diff_time)*(1.0/58);  //Distance in cms
+
+    xQueueSendFromISR(xQueue1,&distance_value,0);
+
+    xSemaphoreGiveFromISR(Trig_Sem,false);
+
+}
+
+float Ultra_Sonic_4ping :: ping_get_from_filter()
+{
+    float d = 0.0;
+
+    d = avg_filter.getValue();
+
+    return d;
+}
+
+bool Ultra_Sonic_4ping :: recieve_from_queue()
+{
+    //this will fetch the value from the queue and put it in a buffer(pass-by-ref),0 delay / ticks
+    xQueueReceive( xQueue1, &buff_for_recieve, 0);
+    return true;
+}
+
+float Ultra_Sonic_4ping :: get_buffer_value()
+{
+    return buff_for_recieve;
+}
+
+void Ultra_Sonic_4ping :: add_queue_value_to_filter(float a)
+{
+    avg_filter.addValue(a);
 }
