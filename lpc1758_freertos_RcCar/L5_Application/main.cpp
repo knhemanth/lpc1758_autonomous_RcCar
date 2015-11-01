@@ -25,6 +25,25 @@
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
+#include "can.h"
+#include "stdio.h"
+
+void test_bus_off_cb(uint32_t d)
+{
+    printf("\n");
+}
+
+void data_ovr_cb(uint32_t d)
+{
+    printf("\n");
+}
+
+void sensor_controller_init()
+{
+    CAN_init(can1,100,8,8,&test_bus_off_cb,&data_ovr_cb);
+
+}
+
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -122,6 +141,8 @@ int main(void)
         u3.init(WIFI_BAUD_RATE, WIFI_RXQ_SIZE, WIFI_TXQ_SIZE);
         scheduler_add_task(new wifiTask(Uart3::getInstance(), PRIORITY_LOW));
     #endif
+    
+    sensor_controller_init();
 
     scheduler_start(); ///< This shouldn't return
     return -1;
