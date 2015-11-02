@@ -40,7 +40,9 @@ bool bluetooth_controller_sync()
 
     bool sync_tx_status = false;
 
-    bool sync_ack_status = false;
+    bool sync_ack_status = true;
+
+    bool status = false;
 
     SoftTimer can_rx_timer(BT_SYNC_TIME);
 
@@ -48,14 +50,18 @@ bool bluetooth_controller_sync()
     can_init_stat = CAN_init(can2, can_baud_kbps, can_rx_queue_size, can_tx_queue_size, bus_off_cb, data_ovr_cb);
     puts("can init started\n");
 
+    master_sync *ref_obj;
     if(!can_init_stat)
     {
         LOG_ERROR("Bluetooth controller CAN bus could not be initialiazed");
         return can_init_stat;
     }
+    else
+        puts("\ncan init successful");
 
-    puts("\ncan init successful");
-    CAN_bypass_filter_accept_all_msgs();
+    const can_std_id_t slist[]      = {CAN_gen_sid(can2, MASTER_SYNC_ACK_ID), CAN_gen_sid(can2, 0xFFFF)};
+    CAN_setup_filter(slist, 2, NULL, 0, NULL, 0, NULL, 0);
+    //CAN_bypass_filter_accept_all_msgs();
     CAN_reset_bus(can2);
 
     tx_mssg.msg_id = BLUETOOTH_SYNC_ID;
@@ -71,20 +77,22 @@ bool bluetooth_controller_sync()
         if(!sync_tx_status)
         {
             LOG_ERROR("Bluetooth can message cannot be sent");
+            puts("\ncan tx unsuccessfull");
         }
-        if(sync_tx_status)
+        else if(sync_tx_status)
             puts("\ncan tx successful no errors");
 
         can_rx_timer.restart();
         while(!can_rx_timer.expired());
 
-        sync_ack_status = CAN_rx(can2,&master_rx_mssg, BT_CNTRL_TIMEOUT_CAN);
+        status = CAN_rx(can2,&master_rx_mssg, BT_CNTRL_TIMEOUT_CAN);
 
         puts("\ncan rx started");
-        if(sync_ack_status)
+        if(status)
         {
+            ref_obj = (master_sync*)&(master_rx_mssg.data.bytes[0]);
             puts("\ncan rx successful");
-            if(master_rx_mssg.msg_id == MASTER_SYNC_ACK_ID)
+            if((master_rx_mssg.msg_id == MASTER_SYNC_ACK_ID) && (ref_obj->ack_bluetooth == 1))
                 sync_ack_status = true;
         }
 

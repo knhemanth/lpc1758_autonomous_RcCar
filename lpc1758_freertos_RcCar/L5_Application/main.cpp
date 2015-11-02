@@ -78,6 +78,7 @@ class bt_uart_task : public scheduler_task
 
         bool run(void *p)
         {
+           bool status_bt_can_tx = false;
            if(xSemaphoreTake(binary_sem, 100))
            {
            Uart3 &bt_uart = Uart3::getInstance();
@@ -85,6 +86,10 @@ class bt_uart_task : public scheduler_task
 
            char *bt_str;
            bt_str = bt_uart.uart3_gets();
+           can_mssg_bt.msg_id = CHECKPOINT_SEND_ID;
+           can_mssg_bt.frame_fields.data_len = 8;
+           can_mssg_bt.frame_fields.is_29bit = 0;
+
            for(int i = 0;i < bt_data_len; i++)
            {
                can_mssg_bt.data.bytes[i] = (uint8_t)(*(bt_str + i));
@@ -92,8 +97,12 @@ class bt_uart_task : public scheduler_task
                printf("\nval at %d = %d",i,can_mssg_bt.data.bytes[i]);
            }
 
-               CAN_tx(can2, &can_mssg_bt, 10);
-           }
+            status_bt_can_tx = CAN_tx(can2, &can_mssg_bt, 10);
+
+            if(status_bt_can_tx)
+                puts("\nbt data sent on can bus successfully");
+
+}
            return true;
         }
 };
