@@ -11,24 +11,24 @@
 #include "can_msg_id.h"
 #include "can.h"
 #include "file_logger.h"
+#include <stdio.h>
 
-
-/* Global ID variables - Should be used as read only */
-can_std_id_t can_id_kill;
-can_std_id_t can_id_motorio;
-can_std_id_t can_id_sensor;
-can_std_id_t can_id_bluetooth;
-can_std_id_t can_id_geo;
-can_std_id_t can_id_motor_hb;
-can_std_id_t can_id_sensor_hb;
-can_std_id_t can_id_bluetooth_hb;
-can_std_id_t can_id_geo_hb;
-can_std_id_t can_id_runmode;
-can_std_id_t can_id_distance;
-can_std_id_t can_id_chkpt_snd;
-can_std_id_t can_id_chkpt_data;
-can_std_id_t can_id_spd_angle;
-can_std_id_t can_id_loc_data;
+/* Static ID variables - Should be used as read only */
+static can_std_id_t can_id_kill;
+static can_std_id_t can_id_motorio;
+static can_std_id_t can_id_sensor;
+static can_std_id_t can_id_bluetooth;
+static can_std_id_t can_id_geo;
+static can_std_id_t can_id_motor_hb;
+static can_std_id_t can_id_sensor_hb;
+static can_std_id_t can_id_bluetooth_hb;
+static can_std_id_t can_id_geo_hb;
+static can_std_id_t can_id_runmode;
+static can_std_id_t can_id_distance;
+static can_std_id_t can_id_chkpt_snd;
+static can_std_id_t can_id_chkpt_data;
+static can_std_id_t can_id_spd_angle;
+static can_std_id_t can_id_loc_data;
 
 /* Static variables */
 static bool motorio_sync = false;
@@ -41,6 +41,7 @@ static bool power_up_sync_and_ack( void );
 static void bus_off_cb( uint32_t ICR_data );
 static void data_ovr_cb( uint32_t ICR_data );
 
+static bool bus_off_status = false;
 
 bool master_controller_init()
 {
@@ -114,7 +115,9 @@ bool master_controller_init()
     //reset the can bus to enable it now
     CAN_reset_bus(MASTER_CNTL_CANBUS);
 
+#if HEARTBEAT
     while( !( power_up_sync_and_ack() ) );
+#endif
 
     return status;
 }
@@ -201,9 +204,20 @@ static bool power_up_sync_and_ack( void )
     return synced;
 }
 
+void check_bus_off(void)
+{
+    if(bus_off_status)
+    {
+        CAN_reset_bus(MASTER_CNTL_CANBUS);
+        bus_off_status = false;
+    }
+
+    return;
+}
+
 static void bus_off_cb( uint32_t ICR_data )
 {
-    CAN_reset_bus(MASTER_CNTL_CANBUS);
+    bus_off_status = true;
 }
 
 static void data_ovr_cb( uint32_t ICR_data )
@@ -370,3 +384,286 @@ void check_heartbeat( void ) {
         LE.toggle(MASTER_CNTL_HB_LED);
     }
 }
+
+bool avoid_obstacle(void)
+{
+    bool status = false;
+    dist_sensor *sensor_msg;
+    motor_direction motor_data;
+    can_fullcan_msg_t *can_msg_sensor_ptr = NULL;
+    can_fullcan_msg_t can_msg_sensor_data;
+
+    uint32_t left_sensor = 0;
+    uint32_t right_sensor = 0;
+    uint32_t middle_sensor = 0;
+
+#if !BT_APP
+    // Forcing Master to start obstacle avoidance with App
+    status = true;
+#endif
+
+    // Read Sensor Values for Obstacle Zones - Happens every 100Hz
+    can_msg_sensor_ptr = CAN_fullcan_get_entry_ptr(can_id_distance);
+
+    status = CAN_fullcan_read_msg_copy(can_msg_sensor_ptr, &can_msg_sensor_data);
+    if(!status)
+    {
+        //LOG_ERROR("Error!!! : Dids not     Sensor Data\n");
+        LE.on(MASTER_CAN_ERR_LED);
+        return status;
+    }
+    else
+    {
+        LE.off(MASTER_CAN_ERR_LED);
+    }
+
+    sensor_msg = (dist_sensor *) &(can_msg_sensor_data.data.bytes[0]);
+
+    // Avoiding only obstacles in the near zones
+    // Decide direction and speed for Motor
+
+    left_sensor = sensor_msg->front_left;
+    right_sensor = sensor_msg->front_right;
+    middle_sensor = sensor_msg->front_center;
+
+#if ZONE_CALCULATION
+
+    float left_sensor_value = left_sensor * 1000;
+    float right_sensor_value = right_sensor * 1000;
+    float middle_sensor_value = middle_sensor * 1000;
+
+    // Determine Zone for Each Sensor
+
+    left_sensor = getZoneInformation(left_sensor_value);
+    right_sensor = getZoneInformation(right_sensor_value);
+    middle_sensor = getZoneInformation(middle_sensor_value);
+
+#endif
+
+#if OBSTACLE_AVOIDANCE
+
+    if( (left_sensor == NEAR) && (right_sensor == NEAR) && (middle_sensor == NEAR) )
+    {
+        // Stop Car
+        motor_data.speed = (uint8_t)STOP;
+        motor_data.turn = (uint8_t)STRAIGHT;
+    }
+    else
+    {
+        // Default
+        motor_data.speed = (uint8_t)SLOW;
+        motor_data.turn = (uint8_t)STRAIGHT;
+
+        if( left_sensor == NEAR )
+        {
+            if(right_sensor == NEAR)
+            {
+                // Send Slight Right to Motor
+                motor_data.turn = (uint8_t)S_RIGHT;
+            }
+            else
+            {
+                // Send Full Right to Motor
+                motor_data.speed = (uint8_t)SLOW;
+                motor_data.turn = (uint8_t)RIGHT;
+            }
+        }
+        else if( right_sensor == NEAR )
+        {
+            if(left_sensor == NEAR)
+            {
+                // Send Slight Left to Motor
+                motor_data.turn = (uint8_t)S_LEFT;
+            }
+            else
+            {
+                // Send Full Left to Motor
+                motor_data.turn = (uint8_t)LEFT;
+            }
+        }
+        else if(( middle_sensor == NEAR))
+        {
+            if( left_sensor == NEAR)
+            {
+                // Move Slight Right
+                motor_data.turn = (uint8_t) S_RIGHT;
+            }
+            else
+            {
+                // Move Slight Left
+                motor_data.turn = (uint8_t) S_LEFT;
+            }
+        }
+    }
+
+#endif
+
+    // Send Can messages only if Motor and Sensor Controllers are in Sync with the Master
+    if((motorio_sync) && (sensor_sync))
+    {
+        // Send Command over CAN to Motor
+        can_msg_t can_motor_msg;
+        can_motor_msg.msg_id = MOTOR_DIRECTIONS_ID;
+        can_motor_msg.frame_fields.is_29bit = false;
+        can_motor_msg.frame_fields.data_len = sizeof(motor_direction);
+        memcpy(&can_motor_msg.data.qword, &motor_data, sizeof(motor_direction));
+
+        CAN_tx(MASTER_CNTL_CANBUS, &can_motor_msg, MASTER_CNTL_CAN_DELAY);
+
+#if DEBUG
+        printf("%c %c %c | ", printRange(sensor_msg->front_left), printRange(sensor_msg->front_center), printRange(sensor_msg->front_right));
+        printf("%c %c\n", printMotorSpeed((uint8_t) motor_data.speed), printMotorDirection((uint8_t) motor_data.turn));
+#endif
+
+    }
+
+    return true;
+}
+
+#if DEBUG
+char printRange(uint8_t  zone)
+{
+    if(zone == FAR)
+    {
+        return 'F';
+    }
+    else if(zone == MID)
+    {
+        return 'M';
+    }
+    else if(zone == NEAR)
+    {
+        return 'N';
+    }
+
+    return 'P';
+}
+
+char printMotorDirection(uint8_t data)
+{
+    char ch = '.';
+
+    switch(data)
+    {
+        case LEFT :
+            ch = 'L';
+            break;
+
+        case S_LEFT :
+            ch = 'l';
+            break;
+
+        case STRAIGHT:
+            ch = 'S';
+            break;
+
+        case RIGHT :
+            ch = 'R';
+            break;
+
+        case S_RIGHT :
+            ch = 'r';
+            break;
+
+        case BACK :
+            ch = 'B';
+            break;
+    }
+
+    return ch;
+}
+
+char printMotorSpeed(uint8_t speed)
+{
+    char ch = '.';
+
+    switch(speed)
+    {
+        case STOP :
+            ch = 'S';
+            break;
+
+        case SLOW :
+            ch = 's';
+            break;
+
+        case NORMAL :
+            ch = 'N';
+            break;
+
+        case FAST :
+            ch = 'F';
+            break;
+
+        case TURBO :
+            ch = 'T';
+            break;
+    }
+
+    return ch;
+}
+#endif
+
+#if ZONE_CALCULATION
+int getZoneInformation(float value)
+{
+    if(value < ZONE_NEAR_THRESHOLD)
+    {
+        return NEAR;
+    }
+    else if((value >= ZONE_NEAR_THRESHOLD) && (value < ZONE_MID_THRESHOLD))
+    {
+        return MID;
+    }
+    else if((value >= ZONE_MID_THRESHOLD) && (value < ZONE_FAR_THRESHOLD))
+    {
+        return FAR;
+    }
+    else
+    {
+        return NO_OBSTACLE;
+    }
+}
+#endif
+
+#if BT_APP
+bool update_from_app(void)
+{
+    bool status = false;
+    static bool command_from_app = false;
+    can_fullcan_msg_t *can_msg_app_ptr = NULL;
+    can_fullcan_msg_t can_msg_app_data;
+
+    can_msg_app_ptr = CAN_fullcan_get_entry_ptr(can_id_chkpt_snd);
+
+    status = CAN_fullcan_read_msg_copy(can_msg_app_ptr, &can_msg_app_data);
+    if(!status)
+    {
+        //LOG_ERROR("Error!!! : Did not receive App Data\n");
+        //LE.on(MASTER_CAN_ERR_LED);
+        return command_from_app;
+    }
+
+    command_from_app = (bool) (can_msg_app_data.data.bytes[0]);
+
+    if(command_from_app)
+    {
+        // Send Command over CAN to Motor
+        motor_direction motor_data;
+        can_msg_t can_motor_msg;
+
+        motor_data.speed = STOP;
+        motor_data.turn = STRAIGHT;
+
+        can_motor_msg.msg_id = MOTOR_DIRECTIONS_ID;
+        can_motor_msg.frame_fields.is_29bit = false;
+        can_motor_msg.frame_fields.data_len = sizeof(motor_direction);
+        memcpy(&can_motor_msg.data.qword, &motor_data, sizeof(can_motor_msg));
+
+        CAN_tx(MASTER_CNTL_CANBUS, &can_motor_msg, MASTER_CNTL_CAN_DELAY);
+    }
+
+    LE.set(1, command_from_app);
+    return command_from_app;
+}
+#endif

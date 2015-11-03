@@ -37,16 +37,31 @@
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
-
-
 void period_1Hz(void)
 {
+    check_bus_off();
+
+#if HEARTBEAT
     check_heartbeat();
+#endif
+
 }
 
 void period_10Hz(void)
 {
-
+#if 1
+    if(update_from_app())
+    {
+        if(!avoid_obstacle())
+        {
+            // Navigate as per GPS and IMU data
+        }
+        else
+        {
+            LE.toggle(2);
+        }
+    }
+#endif
 }
 
 void period_100Hz(void)
