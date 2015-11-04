@@ -24,9 +24,11 @@
  *
  */
 #include "tasks.hpp"
-#include "examples/examples.hpp"
+#include <stdio.h>
+#include <FreeRTOS.h>
 
-
+#include "can_common.hpp"
+#include "motor_controller.hpp"
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -42,8 +44,11 @@
  *        In either case, you should avoid using this bus or interfacing to external components because
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
+
 int main(void)
 {
+    can_init();             // Initialize CAN bus
+    motor_init();           // Initialize PWM sequence for DC and Servo motor
     /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.
@@ -54,10 +59,14 @@ int main(void)
      * such that it can save remote control codes to non-volatile memory.  IR remote
      * control codes can be learned by typing the "learn" terminal command.
      */
-    scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
-    scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
+    //scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
+
+    /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
+    #if 1
+        scheduler_add_task(new periodicSchedulerTask());
+    #endif
 
     /* The task for the IR receiver */
     // scheduler_add_task(new remoteTask  (PRIORITY_LOW));
@@ -121,5 +130,5 @@ int main(void)
     #endif
 
     scheduler_start(); ///< This shouldn't return
-    return -1;
+    return 0;
 }
