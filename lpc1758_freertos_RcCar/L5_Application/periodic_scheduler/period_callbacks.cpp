@@ -31,7 +31,7 @@
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
-
+#include "IR_sharp_sensor.hpp"
 
 
 /// This is the stack size used for each of the period tasks
@@ -47,6 +47,9 @@ void period_1Hz(void)
 void period_10Hz(void)
 {
     LE.toggle(2);
+
+    ir_sharp_readings();
+
 }
 
 void period_100Hz(void)
