@@ -34,10 +34,15 @@ things to consider-
 - removed duplicate markers.
 - added a URL for Roads API request. Roads API has a breadcrumbs feature which can hopefully be used to implement intermediate markers.
 
+"Intermediate points"
+- Added a Map Icon
+- Added a Method that checks if phone is connected to the internet
+- puts intermediate points on the map. Can be controlled by means of a simple filter. 
+
 things to consider-
-- Location to Destination implementation
-- Roads API and Breadcrumbs
-- code clean up
-- what to do with your app when there's no internet connection?
+- Use elevations api?
+- Roads API and Breadcrumbs?
+- make the filter more robust
+- add a app toolbar for better UX
 - integrate with anush's bluetooth part of the map?
 
