@@ -304,7 +304,7 @@ void  interrupt_based_ping_sensor()
               latest_valuef = front_ultrasonic.get_buffer_value();
           }
       }
-      front_obstacle_zone = front_ultrasonic.get_zone(latest_valuef);
+ //     front_obstacle_zone = front_ultrasonic.get_zone(latest_valuef);
 
     //end of front sensor
     //////////////////////////////////////////////////////////
@@ -318,7 +318,7 @@ void  interrupt_based_ping_sensor()
                  latest_valuer = right_ultrasonic.get_buffer_value();
           }
       }
-      right_obstacle_zone = right_ultrasonic.get_zone(latest_valuer);
+ //     right_obstacle_zone = right_ultrasonic.get_zone(latest_valuer);
 
     //end of right sensor
     //////////////////////////////////////////////////////////
@@ -332,12 +332,12 @@ void  interrupt_based_ping_sensor()
               latest_valuel = left_ultrasonic.get_buffer_value();
           }
       }
-      left_obstacle_zone = left_ultrasonic.get_zone(latest_valuel);
+ //     left_obstacle_zone = left_ultrasonic.get_zone(latest_valuel);
 
     //////////////////////////////////end of left sensor
 
- //     printf("R: %f -- M: %f --L:%f\n",latest_valuer,latest_valuef,latest_valuel);
-     printf("[%s] -- [%s] -- [%s]   \n", zoneMessage[right_obstacle_zone],zoneMessage[front_obstacle_zone],
-              zoneMessage[left_obstacle_zone]);
+      printf("R: %f -- M: %f --L:%f\n",latest_valuer,latest_valuef,latest_valuel);
+ //    printf("[%s] -- [%s] -- [%s]   \n", zoneMessage[right_obstacle_zone],zoneMessage[front_obstacle_zone],
+ //             zoneMessage[left_obstacle_zone]);
 
 }
