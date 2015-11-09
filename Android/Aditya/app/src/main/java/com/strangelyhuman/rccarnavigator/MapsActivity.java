@@ -1,7 +1,14 @@
 package com.strangelyhuman.rccarnavigator;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
@@ -40,33 +47,70 @@ import java.util.List;
 import javax.xml.transform.Source;
 
 
+
 public class MapsActivity extends FragmentActivity {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     ArrayList<LatLng> MarkerPoints;
+    private static String TAG = "Maps Activity";
 
+    public boolean isConnected() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
+        return connectivityManager.getActiveNetworkInfo() != null && connectivityManager.getActiveNetworkInfo().isConnectedOrConnecting();
+    }
+
+//    public class makeRouteDialogFragment extends DialogFragment {
+//
+//        @Override
+//        public Dialog onCreateDialog(Bundle savedInstanceState) {
+//            Bundle args = getArguments();
+//            String title = args.getString("Plot a Route");
+//            String message = args.getString("Would you like to plot a route between the two points?");
+//
+//            return new AlertDialog.Builder(getActivity())
+//                    .setTitle(title)
+//                    .setMessage(message)
+//
+//                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+//                        @Override
+//                        public  void onClick(DialogInterface dialog, int which) {
+//                            getTargetFragment().onActivityResult(getTargetRequestCode(), Activity.RESULT_OK, null);
+//                        }
+//                    })
+//
+//                    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+//                        @Override
+//                        public void onClick(DialogInterface dialog, int which) {
+//                            getTargetFragment().onActivityResult(getTargetRequestCode(), Activity.RESULT_CANCELED, null);
+//                        }
+//                    })
+//                    .create();
+//        }
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         setUpMapIfNeeded();
-
         mMap.setMyLocationEnabled(true);
+
+        //check if your phone is connected to the internet
+        if(!isConnected()){
+            Toast.makeText(MapsActivity.this, "Please ensure that you are connected to the internet", Toast.LENGTH_LONG).show();
+        }
+
+        //AlertDialog dialog = new makeRouteDialogFragment()
 
         //initialize your latlng array
         MarkerPoints =  new ArrayList<LatLng>();
-
-        Button btnRoute = (Button) findViewById(R.id.routeButton);
-
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-
             @Override
             public void onMapClick(LatLng point) {
 
                 //check if the no of markers on map is > 2
-                if (MarkerPoints.size() > 2) {
+                if (MarkerPoints.size() >= 2) {
                     MarkerPoints.clear();
                     mMap.clear();
                     return;
@@ -87,7 +131,7 @@ public class MapsActivity extends FragmentActivity {
                     options.title("Source");
                     Toast.makeText(MapsActivity.this, "Add a Origin Marker", Toast.LENGTH_SHORT).show();
                 }
-                LatLng carOrigin  = MarkerPoints.get(0);
+
                 if (MarkerPoints.size() == 2) {
                     options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
                     options.title("Destination");
@@ -95,32 +139,45 @@ public class MapsActivity extends FragmentActivity {
                     Toast.makeText(MapsActivity.this, "Add a Destination Marker", Toast.LENGTH_SHORT).show();
                 }
 
-
                 //add marker to the map
                 mMap.addMarker(options);
-                if(MarkerPoints.size() >= 2) {
+                if(MarkerPoints.size() == 2) {
                     LatLng origin = MarkerPoints.get(0);
                     LatLng destination = MarkerPoints.get(1);
                     //getting a string for the directions api
                     String url = getDirectionsUrl(origin, destination);
-                    DownloadTask downloadTask = new DownloadTask();
-                    downloadTask.execute(url);
+                    String elevationUrl = getElevationUrl(origin, destination);
+                    //Toast.makeText(MapsActivity.this, elevationUrl, Toast.LENGTH_LONG).show();
+                    DownloadTask downloadTask1 = new DownloadTask();
+                    downloadTask1.execute(url);
                 }
                 }
             });
         //add an event for button route
-        }
+    }
+
+    private String getElevationUrl(LatLng origin, LatLng destination) {
+        //https://maps.googleapis.com/maps/api/elevation/json?path=36.578581,-118.291994|36.23998,-116.83171&samples=3&key=YOUR_API_KEY
+        String origin_string = origin.latitude + "," + origin.longitude;
+        String destination_string = destination.latitude + "," + destination.longitude;
+        String output = "json?";
+        String path = origin_string + "|" + destination_string;
+        String samples = "3";
+        String elevationUrl = "https://maps.googleapis.com/maps/api/elevation/" + output + "path=" + path + "&samples=" + samples + "&key=AIzaSyCwfUYxgA3FXrxX6RqlOJVbf16lHGa7uSs";
+        return elevationUrl;
+    }
 
     private String getDirectionsUrl(LatLng origin, LatLng destination){
         //Origin of the route
         String originStr ="origin=" + origin.latitude + "," + origin.longitude;
-        //Toast.makeText(MapsActivity.this, "Creating Origin Parameters", Toast.LENGTH_SHORT).show();
         String destinationStr = "destination=" + destination.latitude + "," + destination.longitude;
-        //Toast.makeText(MapsActivity.this, "Creating Destination Parameters", Toast.LENGTH_SHORT).show();
         String output = "json";
-        String parameters = originStr+"&"+destinationStr+"&key=AIzaSyCZC6TjANIYInh6vqhJqSXS1qkedgnEwXA";
+        String parameters = originStr+"&"+destinationStr+"&mode=walking&key=AIzaSyCwfUYxgA3FXrxX6RqlOJVbf16lHGa7uSs";
+        String path = origin.latitude+ "," + origin.longitude + "|" + destination.latitude + "," + destination.longitude;
         //building the string for the web service
         String url = "https://maps.googleapis.com/maps/api/directions/"+output + "?" + parameters;
+        //adding a road maps api
+        //String url = "https://roads.googleapis.com/v1/snapToRoads?"+ path + "&key=AIzaSyCwfUYxgA3FXrxX6RqlOJVbf16lHGa7uSs";
         return url;
     }
 
@@ -156,6 +213,7 @@ public class MapsActivity extends FragmentActivity {
             iStream.close();
             urlConnection.disconnect();
         }
+        Log.d(TAG, data);
         return data;
     }
 
@@ -234,13 +292,19 @@ public class MapsActivity extends FragmentActivity {
                     double lat = Double.parseDouble(point.get("lat"));
                     double lng = Double.parseDouble(point.get("lng"));
                     LatLng position = new LatLng(lat, lng);
-
+                    Log.d(TAG, position.toString());
+                    if((j % 8 == 0) && (j != 0))
+                        mMap.addMarker(markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                        .position(position)
+                        .title("latitude: " + lat + ", " + "longitude: " + lng));
                     points.add(position);
+
                 }
                 //adding all points in the route to lineOptions
                 lineOptions.addAll(points);
-                lineOptions.width(2);
-                lineOptions.color(Color.RED);
+                lineOptions.width(5);
+                lineOptions.color(Color.BLUE);
+
                 //mMap.addPolyline(lineOptions);
             }
             //draw polyline on map
@@ -303,71 +367,8 @@ public class MapsActivity extends FragmentActivity {
 
         //Click Listeners
 
-        /*Button Definitions*/
-        Button button1 = (Button) findViewById(R.id.srcButton);
-        Button button2 = (Button) findViewById(R.id.destButton);
-        Button button3 = (Button) findViewById(R.id.routeButton);
-        Button button4 = (Button) findViewById(R.id.TxButton);
+        //Button button4 = (Button) findViewById(R.id.TxButton);
         Button button5 = (Button) findViewById(R.id.clearButton);
-
-        //what to do when you click on the source button
-        button1.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                //Do something in response to button click
-                mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-                    @Override
-                    public void onMapClick(LatLng source) {
-                        mMap.addMarker(new MarkerOptions()
-                                .anchor(0.5f, 0.5f)
-                                .position(source)
-                                .title("Source")
-                                .draggable(true));
-                    }
-                });
-            }
-        });
-
-
-
-        //what to do when you click on the destination button
-        button2.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // Do something in response to button click
-                mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-                    @Override
-                    public void onMapClick(LatLng destination) {
-                        mMap.addMarker(new MarkerOptions()
-                                .anchor(0.5f, 0.5f)
-                                .position(destination)
-                                .title("Destination")
-                                .draggable(true));
-                    }
-                });
-            }
-        });
-
-
-        //what to do when you click on the route button
-        button3.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // Do something in response to button click
-                //which in this case is create a route between our source and destination markers
-//                mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener(){
-//
-//                });
-                //https://maps.googleapis.com/maps/api/directions/json?origin=source&destination=destination&key=rccarnavigator;
-
-            }
-        });
-
-        //what to do when you click on the send button
-        button4.setOnClickListener(new View.OnClickListener() {
-            public void  onClick(View v) {
-                //Do something in response to button click
-                //which in this case equates to sending co-ordinates to your RC Car
-            }
-        });
-
         button5.setOnClickListener(new View.OnClickListener(){
             public  void onClick(View v) {
                 //Clear all markers on screen

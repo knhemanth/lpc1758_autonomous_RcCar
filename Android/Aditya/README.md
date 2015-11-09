@@ -23,8 +23,26 @@ things to consider-
 "Added a JSONParser Class"
 - Added a JSON Parser to parse a string.
 
+"Start plotting routes"
+- Map plots routes from point A to point B.
+- Doesn't work for roads within University campus.
+
+
+"Routes within University"
+- Maps now routes within the campus. It was all about specifying the mode as walking.
+- Logging of intermediate co-ordinates done. Is it less than 8 points? because Google Maps free limits intermediate waypoints to 8.
+- removed duplicate markers.
+- added a URL for Roads API request. Roads API has a breadcrumbs feature which can hopefully be used to implement intermediate markers.
+
+"Intermediate points"
+- Added a Map Icon
+- Added a Method that checks if phone is connected to the internet
+- puts intermediate points on the map. Can be controlled by means of a simple filter. 
 
 things to consider-
-- Routes API to be implemented between a source and destination marker.
-- Duplication issue with marker needs to be looked at.
+- Use elevations api?
+- Roads API and Breadcrumbs?
+- make the filter more robust
+- add a app toolbar for better UX
+- integrate with anush's bluetooth part of the map?
 
