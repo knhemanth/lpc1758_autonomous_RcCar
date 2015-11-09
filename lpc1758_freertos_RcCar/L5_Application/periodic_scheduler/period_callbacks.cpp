@@ -31,8 +31,14 @@
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
+#include "can.h"
+#include "can_msg_id.h"
+#include "bluetooth_controller.hpp"
 
+#define BT_CAN_HB_WAIT 0
 
+extern bool can_bus_off_flag;
+extern can_msg_t bt_can_hb;
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -41,20 +47,30 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 void period_1Hz(void)
 {
-    LE.toggle(1);
+    if(can_bus_off_flag)
+    {
+            CAN_reset_bus(can2);
+            can_bus_off_flag = false;
+    }
+
+    else
+    {
+        CAN_tx(can2,&bt_can_hb,BT_CAN_HB_WAIT);
+        LE.toggle(1);
+    }
 }
 
 void period_10Hz(void)
 {
-    LE.toggle(2);
+
 }
 
 void period_100Hz(void)
 {
-    LE.toggle(3);
+
 }
 
 void period_1000Hz(void)
 {
-    LE.toggle(4);
+
 }
