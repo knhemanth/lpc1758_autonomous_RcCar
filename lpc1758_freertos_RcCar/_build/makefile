@@ -11,6 +11,7 @@ RM := rm -rf
 -include newlib/subdir.mk
 -include L5_Application/source/cmd_handlers/subdir.mk
 -include L5_Application/source/subdir.mk
+-include L5_Application/periodic_scheduler/subdir.mk
 -include L5_Application/examples/subdir.mk
 -include L5_Application/subdir.mk
 -include L4_IO/wireless/src/subdir.mk
