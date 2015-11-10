@@ -39,6 +39,7 @@
 #define bt_data_len 8
 
 can_msg_t can_mssg_bt;
+can_msg_t bt_can_hb;
 bool sync_stat = false;
 
 SemaphoreHandle_t binary_sem = 0;
@@ -69,9 +70,15 @@ class bt_uart_task : public scheduler_task
         {
             Uart3 &bt_uart = Uart3::getInstance();
             bt_uart.init(baud_rate, bt_rx_size, bt_tx_size);
-            can_mssg_bt.msg_id = CHECKPOINT_SEND_ID;
+            can_mssg_bt.msg_id = BLUETOOTH_SYNC_ID;
             can_mssg_bt.frame_fields.data_len = 0;
             can_mssg_bt.frame_fields.is_29bit = 0;
+
+#if heart_beat_enable
+            bt_can_hb.msg_id = BLUETOOTH_HEARTBEAT_ID;
+            bt_can_hb.frame_fields.data_len = 0;
+            bt_can_hb.frame_fields.is_29bit = 0;
+#endif
 
             return true;
         }
@@ -86,9 +93,12 @@ class bt_uart_task : public scheduler_task
 
            char *bt_str;
            bt_str = bt_uart.uart3_gets();
-           can_mssg_bt.msg_id = CHECKPOINT_SEND_ID;
+
+#if synch_disable
+           can_mssg_bt.msg_id = KILL_SWITCH_ID;
            can_mssg_bt.frame_fields.data_len = 8;
            can_mssg_bt.frame_fields.is_29bit = 0;
+#endif
 
            for(int i = 0;i < bt_data_len; i++)
            {
@@ -97,10 +107,14 @@ class bt_uart_task : public scheduler_task
                printf("\nval at %d = %d",i,can_mssg_bt.data.bytes[i]);
            }
 
-            status_bt_can_tx = CAN_tx(can2, &can_mssg_bt, 10);
+            status_bt_can_tx = CAN_tx(can1, &can_mssg_bt, 10);
 
+#if test_can_bt
             if(status_bt_can_tx)
-                puts("\nbt data sent on can bus successfully");
+                puts("\nbt data sent on can bus successful");
+            else
+                puts("\nbt data send on can bus unsuccessful");
+#endif
 
 }
            return true;
@@ -131,6 +145,9 @@ int main(void)
 
     scheduler_add_task(new bt_uart_task(PRIORITY_CRITICAL));
 
+#if heart_beat_enable
+scheduler_add_task(new periodicSchedulerTask());
+#endif
     /* The task for the IR receiver */
     // scheduler_add_task(new remoteTask  (PRIORITY_LOW));
 
