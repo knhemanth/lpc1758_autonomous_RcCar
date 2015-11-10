@@ -39,9 +39,9 @@ public class MainActivity extends Activity {
     private static String address = "20:15:03:03:09:75";
 
     private static String tx_data1 = "10000000\n";
+
     private static String tx_data2 = "00000000\n";
 
-    /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -182,18 +182,12 @@ public class MainActivity extends Activity {
         // Set up a pointer to the remote node using it's address.
         BluetoothDevice device = btAdapter.getRemoteDevice(address);
 
-        // Two things are needed to make a connection:
-        //   A MAC address, which we got above.
-        //   A Service ID or UUID.  In this case we are using the
-        //     UUID for SPP.
             try {
                 btSocket = createBluetoothSocket(device);
             } catch (IOException e1) {
                 errorExit("Fatal Error", "In onResume() and socket create failed: " + e1.getMessage() + ".");
             }
 
-            // Discovery is resource intensive.  Make sure it isn't going on
-            // when you attempt to connect and pass your message.
             btAdapter.cancelDiscovery();
 
             // Establish the connection.  This will block until it connects.
@@ -212,7 +206,6 @@ public class MainActivity extends Activity {
                 }
             }
 
-            // Create a data stream so we can talk to server.
             Log.d(TAG, "...Create Socket...");
 
             try {
