@@ -30,12 +30,37 @@
 
 #include <stdint.h>
 #include "periodic_callback.h"
+#include "c_tlm_var.h"
 #include "motor_controller.hpp"
-
-#define motor_controller 1
+#include "can_common.hpp"
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
+extern can_msg_t motor_msg;
+
+/// Called once before the RTOS is started, this is a good place to initialize things once
+bool period_init(void)
+{
+    bool status = false;
+
+    do {
+    status = can_init();             // Initialize CAN bus
+    }
+    while(!status);                 // If CAN bus is not ready then no need to go further
+
+    motor_init();           // Initialize PWM sequence for DC and Servo motor
+    return true; // Must return true upon success
+}
+
+/// Register any telemetry variables
+bool period_reg_tlm(void)
+{
+    // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
+    tlm_component* comp = tlm_component_add("MOTORIO");
+    TLM_REG_VAR(comp, motor_msg,tlm_char); // Macro to register received motor_msg
+    return true; // Must return true upon success
+}
+
 
 void period_1Hz(void)
 {
@@ -44,9 +69,7 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
-#if motor_controller
     drive_TopGun();             // Receive CAN data from Master and set PWM accordingly
-#endif
 }
 
 void period_100Hz(void)

@@ -23,16 +23,16 @@
 #define DC_NORMAL           6.4
 #define DC_TURBO            6.0
 
-extern can_msg_t message2;
-
+can_msg_t motor_msg;
+//extern int no_motor_msg_count;
 //As per waveform and real testing(percent range - 6.0(right) - 7.5(center) - 9.3(left))
 //As per waveform only(percent range - 5.5(forward) - 8.5(stop) - 10.5(backward))
 
 void motor_init(void){
 
-    static int c=0;
+    int c=0;
     float factor = 5.5;
-    MotorControl.setServo(7.5);
+    MotorControl.setServo(STRAIGHT);
     delay_ms(100);
 
     while(factor<9.3){
@@ -46,10 +46,10 @@ void motor_init(void){
         factor-=0.1;
         delay_ms(100);
     }
-    MotorControl.setServo(7.5); // Set servo straight again
+    MotorControl.setServo(STRAIGHT); // Set servo straight again
 
     while(c < 20){
-        MotorControl.setDC(7.0);
+        MotorControl.setDC(DC_STOP);
         delay_ms(50);
         c++;
     }
@@ -59,31 +59,23 @@ void motor_init(void){
 
 void set_motors_pwm(void) {
 
-    motor_direction *md1= (motor_direction*) &message2.data.qword; // Copy received CAN msg into proper data structure
+    motor_direction *md1= (motor_direction*) &motor_msg.data.qword; // Copy received CAN msg into proper data structure
 
-    // XXX: Let the master controller provide gradients, such as:
-    // 0-10 for back motor
-    // 0-10 for steer motor with 5 being neutral
 #if SERVO_ON
     if(md1->turn==left) {                                       // turn hard left
         MotorControl.setServo(HARD_LEFT);
-        //printf("Motor Task : Turn hard left \n");
     }
     else if(md1->turn==s_left) {                                // turn slight left
         MotorControl.setServo(S_LEFT);
-        //printf("Motor Task : Turn Slight left \n");
     }
     else if(md1->turn==straight) {                              // keep straight
         MotorControl.setServo(STRAIGHT);
-            //printf("Motor Task : Keep Straight \n");
     }
     else if(md1->turn==s_right) {                               // turn slight right
         MotorControl.setServo(S_RIGHT);
-        //printf("Motor Task : Turn Slight Right \n");
     }
     else if(md1->turn==right) {                                 // turn hard right
         MotorControl.setServo(HARD_RIGHT);
-        //printf("Motor Task : Turn hard Right \n");
     }
 #endif
 
@@ -120,13 +112,10 @@ void drive_TopGun(void) {
      *
      *  set_motors_pwm();
      */
-    if(receive_data()){
-        if(message2.msg_id == MOTOR_DIRECTIONS_ID) {  // Check if got motor_direction message
-               set_motors_pwm();
-        }
+    if(receive_data()) {                                 // Check if got motor_direction message
+        set_motors_pwm();
     }
-    else{
-        MotorControl.setDC(DC_STOP);
+    else {
         LE.toggle(CAN_ERROR_LED);   // Toggle LED 4 if Motor controller is not getting any data over CAN bus
     }
 }
