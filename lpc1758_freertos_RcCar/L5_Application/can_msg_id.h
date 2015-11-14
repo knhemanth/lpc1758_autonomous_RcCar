@@ -195,6 +195,31 @@ typedef struct{
 
 }__attribute__((__packed__)) lght_batt_reading;
 
+// Enumerations used by Master, Motor and Sensor Controllers
+typedef enum {
+    STOP = 0,
+    SLOW,
+    NORMAL,
+    FAST,
+    TURBO
+}speed_mode;
+
+typedef enum{
+    NO_OBSTACLE = 0,
+    FAR,
+    MID,
+    NEAR
+}sensor_zone;
+
+typedef enum {
+    LEFT = 0,
+    S_LEFT,
+    STRAIGHT,
+    S_RIGHT,
+    RIGHT,
+    BACK
+} direction_t;
+
 #ifdef __cplusplus
 }
 #endif

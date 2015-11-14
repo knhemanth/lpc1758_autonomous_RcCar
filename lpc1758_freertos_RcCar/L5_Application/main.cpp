@@ -25,6 +25,10 @@
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
+#include "master_controller.hpp"
+#include "io.hpp"
+#include "soft_timer.hpp"
+#include "file_logger.h"
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -42,6 +46,7 @@
  */
 int main(void)
 {
+    SoftTimer init_timer(MASTER_LED_INIT_TIME);
     /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.
@@ -57,8 +62,29 @@ int main(void)
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
+    bool status = false;
+
+    /* Initialize the master controller */
+    while( !status )
+       status = master_controller_init();
+
+    if( !status )
+    {
+        init_timer.reset();
+
+        // Should never come here
+        LOG_ERROR("ERROR!!! Should not be here. Master controller failed to init\n");
+
+        while(1)
+        {
+            LE.toggle(1);
+            init_timer.restart();
+            while( !init_timer.expired() );
+        }
+    }
+
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
-    #if 0
+    #if 1
     scheduler_add_task(new periodicSchedulerTask());
     #endif
 
