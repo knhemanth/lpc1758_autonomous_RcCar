@@ -262,12 +262,16 @@ void  interrupt_based_ping_sensor()
         static float latest_valuef = 0;
         static float latest_valuer = 0;
         static float latest_valuel = 0;
-
+#if 0
         static int front_obstacle_zone = 0;
         static  int right_obstacle_zone = 0;
         static  int left_obstacle_zone = 0;
 
          obs_thre threshold;
+#endif
+         dist_sensor all_sensor;
+         can_msg_t sensor_msg;
+         bool status = false;
 
 
 
@@ -340,4 +344,89 @@ void  interrupt_based_ping_sensor()
  //    printf("[%s] -- [%s] -- [%s]   \n", zoneMessage[right_obstacle_zone],zoneMessage[front_obstacle_zone],
  //             zoneMessage[left_obstacle_zone]);
 
+      all_sensor.front_center = latest_valuef ;
+      all_sensor.front_left   = latest_valuel ;
+      all_sensor.front_right  = latest_valuer ;
+
+      sensor_msg.msg_id = DISTANCE_SENSOR_ID ;
+      sensor_msg.frame_fields.is_29bit = 0;      //11-bit
+      sensor_msg.frame_fields.data_len = sizeof(dist_sensor);
+      memcpy(&sensor_msg.data.qword,&all_sensor,sizeof(dist_sensor));
+
+      status = CAN_tx(PING_CAN,&sensor_msg,PING_TIMEOUT);
+
+      if(status == false)
+      {
+          LOG_ERROR("Sending Distance values -- FAILED ");
+          LE.toggle(  PING_HEARTBEAT_ERROR_LED  );
+      }
+      else
+      {
+          LE.off(  PING_HEARTBEAT_ERROR_LED  );
+      }
 }
+bool bus_reset()
+{
+    CAN_reset_bus(PING_CAN);
+    return true;
+}
+
+void ping_heartbeat(void)
+{
+        //Heartbeat to master
+        can_msg_t sensor_heart_msg;
+        bool status = false;
+
+        sensor_heart_msg.msg_id = SENSOR_HEARTBEAT_ID ;
+        sensor_heart_msg.frame_fields.is_29bit = 0;
+        sensor_heart_msg.frame_fields.data_len = 0;
+
+        //can2,sensor_heartbeat_id,0 timout
+        status = CAN_tx(PING_CAN,&sensor_heart_msg,PING_TIMEOUT);
+
+        if(status == false)
+        {
+            LOG_ERROR("SENDING PING HEARTBEAT FAILED!!");
+        }
+        else
+        {
+            LE.toggle(  PING_HEARTBEAT_ERROR_LED  );
+        }
+}
+
+void ping_powerupsync(void)
+{
+    can_msg_t ping_sync_msg;
+    bool sync_ack = false;
+    bool status   = false;
+
+    ping_sync_msg.msg_id = SENSOR_SYNC_ID ;
+    ping_sync_msg.frame_fields.is_29bit = 0;
+    ping_sync_msg.frame_fields.data_len = 0;
+
+
+    do
+    {
+        status = CAN_tx(PING_CAN,&ping_sync_msg,PING_TIMEOUT);
+
+        if(status == false)
+        {
+            LOG_ERROR("SENDING PING SYNC FAILED!");
+        }
+
+        delay_ms(500);
+
+    }while (sync_ack == false);
+}
+
+extern bool bus_off;
+void test_bus_off_cb(uint32_t d)
+{
+   bus_off = true;
+}
+
+void data_ovr_cb(uint32_t d)
+{
+    CAN_reset_bus( PING_CAN );
+}
+
