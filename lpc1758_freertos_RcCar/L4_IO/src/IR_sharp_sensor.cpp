@@ -28,7 +28,7 @@ void ir_sharp_readings()
 {
     static int a;
 
-    a = ir_sharp.get_ir_reading();
+    a = ir_sharp.get_ir_reading(); //push it to dist_sensor back
 }
 /*
 bool IR_sharp_sensor::init()
