@@ -395,12 +395,7 @@ bool avoid_obstacle(void)
 
     uint32_t left_sensor = 0;
     uint32_t right_sensor = 0;
-    uint32_t middle_sensor = 0;
-
-#if !BT_APP
-    // Forcing Master to start obstacle avoidance with App
-    status = true;
-#endif
+    uint32_t front_sensor = 0;
 
     // Read Sensor Values for Obstacle Zones - Happens every 100Hz
     can_msg_sensor_ptr = CAN_fullcan_get_entry_ptr(can_id_distance);
@@ -424,25 +419,27 @@ bool avoid_obstacle(void)
 
     left_sensor = sensor_msg->front_left;
     right_sensor = sensor_msg->front_right;
-    middle_sensor = sensor_msg->front_center;
+    front_sensor = sensor_msg->front_center;
 
 #if ZONE_CALCULATION
 
     float left_sensor_value = left_sensor * 1000;
     float right_sensor_value = right_sensor * 1000;
-    float middle_sensor_value = middle_sensor * 1000;
+    float middle_sensor_value = front_sensor * 1000;
 
     // Determine Zone for Each Sensor
 
     left_sensor = getZoneInformation(left_sensor_value);
     right_sensor = getZoneInformation(right_sensor_value);
-    middle_sensor = getZoneInformation(middle_sensor_value);
+    front_sensor = getZoneInformation(middle_sensor_value);
 
 #endif
 
-#if OBSTACLE_AVOIDANCE
+#if 0 //OBSTACLE_AVOIDANCE ONE
 
-    if( (left_sensor == NEAR) && (right_sensor == NEAR) && (middle_sensor == NEAR) )
+    unsigned int temp_range = MID;
+
+    if( (left_sensor > temp_range) && (right_sensor > temp_range) && (front_sensor > temp_range) )
     {
         // Stop Car
         motor_data.speed = (uint8_t)STOP;
@@ -454,53 +451,152 @@ bool avoid_obstacle(void)
         motor_data.speed = (uint8_t)SLOW;
         motor_data.turn = (uint8_t)STRAIGHT;
 
-        if( left_sensor == NEAR )
+
+        if( left_sensor >= right_sensor )
         {
-            if(right_sensor == NEAR)
+            if(left_sensor >= temp_range)
             {
                 // Send Slight Right to Motor
-                motor_data.turn = (uint8_t)S_RIGHT;
+                motor_data.turn = (uint8_t)RIGHT;
             }
             else
             {
                 // Send Full Right to Motor
-                motor_data.speed = (uint8_t)SLOW;
-                motor_data.turn = (uint8_t)RIGHT;
+                motor_data.turn = (uint8_t)S_RIGHT;
             }
         }
-        else if( right_sensor == NEAR )
+        else if( right_sensor >= left_sensor )
         {
-            if(left_sensor == NEAR)
+            if(right_sensor >= temp_range)
             {
                 // Send Slight Left to Motor
-                motor_data.turn = (uint8_t)S_LEFT;
+                motor_data.turn = (uint8_t)LEFT;
             }
             else
             {
                 // Send Full Left to Motor
-                motor_data.turn = (uint8_t)LEFT;
+                motor_data.turn = (uint8_t)S_LEFT;
             }
         }
-        else if(( middle_sensor == NEAR))
+        else if(( front_sensor >= temp_range))
         {
-            if( left_sensor == NEAR)
+            if( left_sensor >= right_sensor)
             {
                 // Move Slight Right
-                motor_data.turn = (uint8_t) S_RIGHT;
+                if( left_sensor >= temp_range)
+                    motor_data.turn = (uint8_t)RIGHT;
+                else
+                    motor_data.turn = (uint8_t)S_RIGHT;
             }
             else
             {
                 // Move Slight Left
-                motor_data.turn = (uint8_t) S_LEFT;
+                if( right_sensor >= temp_range )
+                    motor_data.turn = (uint8_t) LEFT;
+
+                else
+                    motor_data.turn = (uint8_t) S_LEFT;
             }
         }
     }
 
 #endif
 
+#if OBSTACLE_AVOIDANCE
+
+    if((left_sensor == NEAR) || (front_sensor == NEAR) || (right_sensor == NEAR))
+    {
+        motor_data.speed = (uint8_t) SLOW;
+
+        if((left_sensor == NEAR) && (front_sensor == NEAR) && (right_sensor == NEAR))
+        {
+            motor_data.turn = (uint8_t) STRAIGHT;
+            motor_data.speed = (uint8_t) STOP;
+        }
+        else if((left_sensor != NEAR) && (front_sensor != NEAR) && (right_sensor == NEAR))
+        {
+            motor_data.turn = (uint8_t) LEFT;
+        }
+        else if((left_sensor != NEAR) && (front_sensor == NEAR) && (right_sensor != NEAR))
+        {
+            motor_data.turn = (uint8_t) STRAIGHT;
+            motor_data.speed = (uint8_t) STOP;
+        }
+        else if((left_sensor != NEAR) && (front_sensor == NEAR) && (right_sensor == NEAR))
+        {
+            motor_data.turn = (uint8_t) LEFT;
+        }
+        else if((left_sensor == NEAR) && (front_sensor != NEAR) && (right_sensor != NEAR))
+        {
+            motor_data.turn = (uint8_t) RIGHT;
+        }
+        else if((left_sensor == NEAR ) && (front_sensor != NEAR) && (right_sensor == NEAR))
+        {
+            motor_data.turn = (uint8_t) STRAIGHT;
+            motor_data.speed = (uint8_t) STOP;
+        }
+        else if((left_sensor == NEAR) && (front_sensor == NEAR) && (right_sensor != NEAR))
+        {
+            motor_data.turn = (uint8_t) RIGHT;
+        }
+    }
+    else if((left_sensor == MID) || (front_sensor == MID) || (right_sensor == MID))
+    {
+        motor_data.speed = (uint8_t) SLOW;
+
+        if((left_sensor != MID) && (front_sensor != MID) &&(right_sensor == MID))
+        {
+            motor_data.turn = (uint8_t) S_LEFT;
+        }
+        else if((left_sensor != MID) && (front_sensor == MID) &&(right_sensor != MID))
+        {
+            if(right_sensor > left_sensor)
+            {
+                motor_data.turn = (uint8_t) S_LEFT;
+            }
+            else if(right_sensor < left_sensor)
+            {
+                motor_data.turn = (uint8_t) S_RIGHT;
+            }
+            else
+            {
+                motor_data.turn = (uint8_t) STRAIGHT;
+            }
+        }
+        else if((left_sensor != MID) && (front_sensor == MID) &&(right_sensor == MID))
+        {
+            motor_data.turn = (uint8_t) S_LEFT;
+        }
+        else if((left_sensor == MID) && (front_sensor != MID) &&(right_sensor != MID))
+        {
+            motor_data.turn = (uint8_t) S_RIGHT;
+        }
+        else if((left_sensor == MID) && (front_sensor != MID) &&(right_sensor == MID))
+        {
+            motor_data.turn = (uint8_t) STRAIGHT;
+        }
+        else if((left_sensor == MID) && (front_sensor == MID) &&(right_sensor != MID))
+        {
+            motor_data.turn = (uint8_t) S_RIGHT;
+        }
+        else if((left_sensor == MID) && (front_sensor == MID) &&(right_sensor == MID))
+        {
+            motor_data.turn = (uint8_t) STRAIGHT;
+        }
+    }
+    else
+    {
+        motor_data.turn = (uint8_t) STRAIGHT;
+        motor_data.speed = (uint8_t) NORMAL;
+    }
+
+#endif
+
     // Send Can messages only if Motor and Sensor Controllers are in Sync with the Master
+#if HEARTBEAT
     if((motorio_sync) && (sensor_sync))
     {
+#endif
         // Send Command over CAN to Motor
         can_msg_t can_motor_msg;
         can_motor_msg.msg_id = MOTOR_DIRECTIONS_ID;
@@ -515,8 +611,9 @@ bool avoid_obstacle(void)
         printf("%c %c\n", printMotorSpeed((uint8_t) motor_data.speed), printMotorDirection((uint8_t) motor_data.turn));
 #endif
 
+#if HEARTBEAT
     }
-
+#endif
     return true;
 }
 
@@ -634,36 +731,37 @@ bool update_from_app(void)
     can_fullcan_msg_t *can_msg_app_ptr = NULL;
     can_fullcan_msg_t can_msg_app_data;
 
-    can_msg_app_ptr = CAN_fullcan_get_entry_ptr(can_id_chkpt_snd);
+    // Temporary App is sent via the Kill Switch Message ID
+    can_msg_app_ptr = CAN_fullcan_get_entry_ptr(can_id_kill);
 
     status = CAN_fullcan_read_msg_copy(can_msg_app_ptr, &can_msg_app_data);
-    if(!status)
+
+    // If an updated message from Bluetooth Controller is received, change state
+    // Else, return previous state
+    if(status)
     {
-        //LOG_ERROR("Error!!! : Did not receive App Data\n");
-        //LE.on(MASTER_CAN_ERR_LED);
-        return command_from_app;
+        command_from_app = (bool) (can_msg_app_data.data.bytes[0]);
+
+        if(!command_from_app)
+        {
+            // Send Stop Command over CAN to Motor in case command_from_app is false
+            motor_direction motor_data;
+            can_msg_t can_motor_msg;
+
+            motor_data.speed = STOP;
+            motor_data.turn = STRAIGHT;
+
+            can_motor_msg.msg_id = MOTOR_DIRECTIONS_ID;
+            can_motor_msg.frame_fields.is_29bit = false;
+            can_motor_msg.frame_fields.data_len = sizeof(motor_direction);
+            memcpy(&can_motor_msg.data.qword, &motor_data, sizeof(can_motor_msg));
+
+            CAN_tx(MASTER_CNTL_CANBUS, &can_motor_msg, MASTER_CNTL_CAN_DELAY);
+        }
+
+        LE.set(1, command_from_app);
     }
 
-    command_from_app = (bool) (can_msg_app_data.data.bytes[0]);
-
-    if(command_from_app)
-    {
-        // Send Command over CAN to Motor
-        motor_direction motor_data;
-        can_msg_t can_motor_msg;
-
-        motor_data.speed = STOP;
-        motor_data.turn = STRAIGHT;
-
-        can_motor_msg.msg_id = MOTOR_DIRECTIONS_ID;
-        can_motor_msg.frame_fields.is_29bit = false;
-        can_motor_msg.frame_fields.data_len = sizeof(motor_direction);
-        memcpy(&can_motor_msg.data.qword, &motor_data, sizeof(can_motor_msg));
-
-        CAN_tx(MASTER_CNTL_CANBUS, &can_motor_msg, MASTER_CNTL_CAN_DELAY);
-    }
-
-    LE.set(1, command_from_app);
     return command_from_app;
 }
 #endif

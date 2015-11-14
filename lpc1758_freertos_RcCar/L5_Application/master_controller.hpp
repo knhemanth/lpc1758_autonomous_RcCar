@@ -31,13 +31,14 @@
 #define RESET   ( 1 )
 #define NORESET ( 0 )
 
-#define HEARTBEAT 0
-#define DEBUG 1
-#define OBSTACLE_AVOIDANCE 1
-#define ZONE_CALCULATION 0
+#define HEARTBEAT ( 1 )
+#define DEBUG ( 1 )
+#define ZONE_CALCULATION  ( 0 )
+#define OBSTACLE_AVOIDANCE ( 1 )
+
 
 // 1 - No Bluetooth App; 0 - Control via Bluetooth App
-#define BT_APP 1
+#define BT_APP ( 1 )
 
 // Zone Thresholds
 #define ZONE_NEAR_THRESHOLD ( 50 )
@@ -48,26 +49,6 @@ enum MASTER_ACK {
     NACK = 0,
     ACK
 };
-
-
-#if 0
-/* Global IDs */
-extern can_std_id_t can_id_kill;
-extern can_std_id_t can_id_motorio;
-extern can_std_id_t can_id_sensor;
-extern can_std_id_t can_id_bluetooth;
-extern can_std_id_t can_id_geo;
-extern can_std_id_t can_id_motor_hb;
-extern can_std_id_t can_id_sensor_hb;
-extern can_std_id_t can_id_bluetooth_hb;
-extern can_std_id_t can_id_geo_hb;
-extern can_std_id_t can_id_runmode;
-extern can_std_id_t can_id_distance;
-extern can_std_id_t can_id_chkpt_snd;
-extern can_std_id_t can_id_chkpt_data;
-extern can_std_id_t can_id_spd_angle;
-extern can_std_id_t can_id_loc_data;
-#endif
 
 /* Function Prototypes */
 bool master_controller_init( void );
