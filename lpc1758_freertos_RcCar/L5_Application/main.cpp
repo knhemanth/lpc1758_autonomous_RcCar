@@ -19,15 +19,19 @@
 /**
  * @file
  * @brief This is the application entry point.
- * 			FreeRTOS and stdio printf is pre-configured to use uart0_min.h before main() enters.
- * 			@see L0_LowLevel/lpc_sys.h if you wish to override printf/scanf functions.
+ *          FreeRTOS and stdio printf is pre-configured to use uart0_min.h before main() enters.
+ *          @see L0_LowLevel/lpc_sys.h if you wish to override printf/scanf functions.
  *
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include "geo_controller.hpp"
-#include "io.hpp"
+//#include "io.hpp"
 #include "imu.hpp"
+//#include "soft_timer.hpp"
+#include "stdio.h"
+#include "stdlib.h"
+#include "GPS.hpp"
 
 
 /**
@@ -46,6 +50,8 @@
  */
 int main(void)
 {
+  //  SoftTimer init_timer(GEO_INIT_LED_TIME);
+    gps_init();
     /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.
@@ -59,22 +65,29 @@ int main(void)
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
-    scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
+   // scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
     /* Call controller init routine before starting periodic call backs */
     bool status = geo_controller_init();
 
-    /* If init failed there is no point in continuing */
-    if( !status )
-    {
-        while( 1 )
-        {
-            LE.toggle(1);
-            vTaskDelayMs(1000);
-        }
-    }
 
-    scheduler_add_task(new IMUTask(PRIORITY_CRITICAL));
+    /* If init failed there is no point in continuing */
+    // XXX: Keep trying to sync forever, no point dying here
+    // DONE: The init function will try to sync forever. This case should never happen
+  //  init_timer.reset();
+  //  if( !status )
+  //  {
+  //      printf("ERROR!!!! Geo Controller - This should never happen\n");
+
+      //  while( 1 )
+      //  {
+      //      LE.toggle(1);
+      //      init_timer.restart();
+      //      while( !init_timer.expired());
+     //   }
+   // }
+
+   scheduler_add_task(new IMUTask(PRIORITY_CRITICAL));
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
     #if 1
@@ -108,8 +121,8 @@ int main(void)
     #endif
 
     /**
-	 * Try the rx / tx tasks together to see how they queue data to each other.
-	 */
+     * Try the rx / tx tasks together to see how they queue data to each other.
+     */
     #if 0
         scheduler_add_task(new queue_tx());
         scheduler_add_task(new queue_rx());

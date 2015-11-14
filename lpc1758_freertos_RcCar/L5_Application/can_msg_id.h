@@ -9,41 +9,61 @@ extern "C"{
 
 // CAN message IDS
 
-#define KILL_SWITCH_ID				(0x00)
-#define RESET_ID					(0x01)
-#define MASTER_SYNC_ACK_ID			(0x02)
-#define MOTORIO_SYNC_ID				(0x03)
-#define SENSOR_SYNC_ID				(0x04)
-#define BLUETOOTH_SYNC_ID			(0x05)
-#define GEO_SYNC_ID					(0x06)
-#define MOTORIO_HEARTBEAT_ID		(0x07)
-#define SENSOR_HEARTBEAT_ID			(0x08)
-#define BLUETOOTH_HEARTBEAT_ID		(0x09)
-#define GEO_HEARTBEAT_ID			(0x0A)
-#define RUN_MODE_ID					(0x0B)
-#define DISTANCE_SENSOR_ID			(0x0C)
-#define MOTOR_DIRECTIONS_ID			(0x0D)
-#define CHECKPOINT_REQ_ID			(0x0E)
-#define CHECKPOINT_SEND_ID			(0x0F)
-#define CHECKPOINT_DATA_ID			(0x10)
-#define GEO_LOC_UPDATE_ID			(0x11)
-#define GEO_SPEED_ANGLE_ID			(0x12)
-#define GEO_LOC_DATA_ID				(0x13)
-#define LIGHT_BATTERY_SENSOR_ID		(0x14)
+/// XXX: Recommend enumeration for this
+enum CAN_MSG_ID
+{
+    KILL_SWITCH_ID = 0,
+    RESET_ID,
+    MASTER_SYNC_ACK_ID,
+    MOTORIO_SYNC_ID,
+    SENSOR_SYNC_ID,
+    BLUETOOTH_SYNC_ID,
+    GEO_SYNC_ID,
+    MOTORIO_HEARTBEAT_ID,
+    SENSOR_HEARTBEAT_ID,
+    BLUETOOTH_HEARTBEAT_ID,
+    GEO_HEARTBEAT_ID,
+    RUN_MODE_ID,
+    DISTANCE_SENSOR_ID,
+    MOTOR_DIRECTIONS_ID,
+    CHECKPOINT_REQ_ID,
+    CHECKPOINT_SEND_ID,
+    CHECKPOINT_DATA_ID,
+    GEO_LOC_UPDATE_ID,
+    GEO_SPEED_ANGLE_ID,
+    GEO_LOC_DATA_ID,
+    LIGHT_BATTERY_SENSOR_ID,
+
+    // Add any message IDs before this
+    CAN_MSG_MAX_ID
+};
 
 /*
- *	Data structures for CAN message IDs
+ *  Data structures for CAN message IDs
  *
- *	The following messages have no data fields
+ *  The following messages have no data fields
  *
- *	1. Kill switch
- *	2. Reset
- *	3. MOTORIO_SYNC
- *	4. SENSOR_SYNC
- *	5. BLUETOOTH_SYNC
- *	6. GEO_SYNC
- *	7. CHECKPOINT_REQ_ID
+ *  1. Kill switch
+ *  2. MOTORIO_SYNC
+ *  3. SENSOR_SYNC
+ *  4. BLUETOOTH_SYNC
+ *  5. GEO_SYNC
+ *  6. CHECKPOINT_REQ_ID
  */
+
+/*
+ * Reset message for each controller
+ * Sent by: Master controller
+ * Received by: All controllers
+ */
+typedef struct{
+
+    uint64_t reset_motorio:8;     // Acknowledge motorio controller
+    uint64_t reset_sensor:8;      // Acknowledge sensor controller
+    uint64_t reset_geo:8;         // Acknowledge geo controller
+    uint64_t reset_bluetooth:8;   // Acknowledge bluetooth module
+
+}__attribute__((__packed__)) rst_msg;
 
 
 /* 
@@ -51,12 +71,12 @@ extern "C"{
  * Sent by: Master controller
  * Received by: All controllers
  */
-typedef struct master_sync_ack{
+typedef struct{
 
-	uint8_t ack_motorio;		// Acknowledge motorio controller
-	uint8_t ack_sensor;			// Acknowledge sensor controller
-	uint8_t ack_geo;			// Acknowledge geo controller
-	uint8_t ack_bluetooth;		// Acknowledge bluetooth module
+    uint64_t ack_motorio:8;     // Acknowledge motorio controller
+    uint64_t ack_sensor:8;          // Acknowledge sensor controller
+    uint64_t ack_geo:8;         // Acknowledge geo controller
+    uint64_t ack_bluetooth:8;       // Acknowledge bluetooth module
 
 }__attribute__((__packed__)) master_sync;
 
@@ -66,9 +86,9 @@ typedef struct master_sync_ack{
  * Sent by: All controllers
  * Received by: Master controller
  */
-typedef struct heart_beat{
+typedef struct{
 
-	uint8_t counter;			// Continuity counter that increments with every beat
+    uint64_t counter:8;         // Continuity counter that increments with every beat
 
 }__attribute__((__packed__)) heart_beat;
 
@@ -80,25 +100,25 @@ typedef struct heart_beat{
  * Received by: Master controller
  */
 
-typedef struct run_mode{
+typedef struct{
 
-	uint8_t mode;				// Run modes - 1. Navigation mode, 2. Free run mode and 3. Manual mode
+    uint64_t mode:8;                // Run modes - 1. Navigation mode, 2. Free run mode and 3. Manual mode
 
 }__attribute__((__packed__)) run_mode;
 
 /*
- *	Ultrasonic sensor readings for obstacle avoidance
- *	Sent by: Sensor controller
- *	Received by: Master controller
+ *  Ultrasonic sensor readings for obstacle avoidance
+ *  Sent by: Sensor controller
+ *  Received by: Master controller
  */
-typedef struct distance_sensor{
+typedef struct{
 
-	uint8_t front_left;			// Front left sensor reading
-	uint8_t front_right;		// Front right sensor reading
-	uint8_t front_center;		// Front centre sensor reading
-	uint8_t left;				// Left sensor reading
-	uint8_t right;				// Right sensor reading
-	uint8_t back;				// Back sensor reading
+    uint64_t front_left:8;          // Front left sensor reading
+    uint64_t front_right:8;     // Front right sensor reading
+    uint64_t front_center:8;        // Front centre sensor reading
+    uint64_t left:8;                // Left sensor reading
+    uint64_t right:8;               // Right sensor reading
+    uint64_t back:8;                // Back sensor reading
 
 }__attribute__((__packed__)) dist_sensor;
 
@@ -108,10 +128,10 @@ typedef struct distance_sensor{
  * Sent by: Master controller 
  * Received by: MotorIO controller
  */
-typedef struct motor_direction{
+typedef struct{
 
-	uint8_t speed;				// Indicate speed for DC motor
-	uint8_t turn;				// Indicate turn angle for servo motor
+    uint64_t speed:8;               // Indicate speed for DC motor
+    uint64_t turn:8;                // Indicate turn angle for servo motor
 
 }__attribute__((__packed__)) motor_direction;
 
@@ -121,9 +141,9 @@ typedef struct motor_direction{
  * Sent by: Bluetooth module [ After receiving data from Android app ]
  * Received by: Master controller
  */
-typedef struct checkpoint_send{
+typedef struct{
 
-	uint32_t num_of_points;		// Number of check-points to be loaded
+    uint64_t num_of_points;     // Number of check-points to be loaded
 
 }__attribute__((__packed__)) chk_point_snd;
 
@@ -134,9 +154,14 @@ typedef struct checkpoint_send{
  * Received by: Master controller
  */
 typedef struct checkpoint_data{
-
-	float latitude;
-	float longitude;
+        uint8_t gpsbyte1;
+        uint8_t gpsbyte2;
+        uint8_t gpsbyte3;
+        uint8_t gpsbyte4;
+        uint8_t gpsbyte5;
+        uint8_t gpsbyte6;
+        uint8_t gpsbyte7;
+        uint8_t gpsbyte8;
 
 }__attribute__((__packed__)) chk_point_data;
 
@@ -146,7 +171,7 @@ typedef struct checkpoint_data{
  * Sent by: Master controller
  * Received by: Geo controller
  */
-typedef chk_point_data geo_loc;	// use geo_loc instead of chk_point_data
+typedef chk_point_data geo_loc; // use geo_loc instead of chk_point_data
 
 /* 
  * Indicate speed measured by GPS, the current heading and bearing from IMU 
@@ -154,11 +179,10 @@ typedef chk_point_data geo_loc;	// use geo_loc instead of chk_point_data
  * Sent by: Geo controller
  * Received by: Master controller and IO controller
  */
-typedef struct geo_speed_angle{
+typedef struct{
 
-	uint8_t speed;				// Speed as measured by the GPS sensor
-	uint16_t heading;			// Heading from the Geo controller
-	uint16_t bearing;			// Bearing calculated by the Geo controller
+    uint16_t heading;            // Heading from the Geo controller
+    uint16_t bearing;            // Bearing calculated by the Geo controller
 
 }__attribute__((__packed__)) geo_spd_angle;
 
@@ -168,10 +192,10 @@ typedef struct geo_speed_angle{
  * Sent by: Sensor controller
  * Received by: IO controller
  */
-typedef struct light_battery_sensor{
+typedef struct{
 
-	uint8_t light_sensor;		// Light sensor reading
-	uint8_t batt_sensor;		// Battery level sensor reading
+    uint64_t light_sensor:8;        // Light sensor reading
+    uint64_t batt_sensor:8;     // Battery level sensor reading
 
 }__attribute__((__packed__)) lght_batt_reading;
 

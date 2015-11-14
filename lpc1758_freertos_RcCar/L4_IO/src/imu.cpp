@@ -11,6 +11,7 @@
 #include "file_logger.h"
 #include "geo_controller.hpp"
 #include <stdio.h>
+#include "stdlib.h"
 
 
 /* TO DO:
@@ -216,6 +217,7 @@ float imu::getHeading( void )
 bool IMUTask::run(void *p)
 {
     // Send Read Command to IMU
+
     if(IMUInterface.sendYawReadCommand(IMUInterface.readYawCommand))
     {
         // Waits for a response from IMU
