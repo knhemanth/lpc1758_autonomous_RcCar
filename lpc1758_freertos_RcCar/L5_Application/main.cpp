@@ -27,20 +27,13 @@
 #include "examples/examples.hpp"
 #include "can.h"
 #include "stdio.h"
+#include "3ultrasonic_sensor_interrupts.hpp"
 
-void test_bus_off_cb(uint32_t d)
-{
-    printf("\n");
-}
 
-void data_ovr_cb(uint32_t d)
-{
-    printf("\n");
-}
 
 void sensor_controller_init()
 {
-    CAN_init(can1,100,8,8,&test_bus_off_cb,&data_ovr_cb);
+    CAN_init(PING_CAN,PING_BAUD,8,8,&test_bus_off_cb,&data_ovr_cb);
 
 }
 
