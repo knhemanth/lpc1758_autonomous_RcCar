@@ -27,6 +27,13 @@
 #include "projdefs.h"
 #include "file_logger.h"
 #include "stdio.h"
+#include "can.h"    //sync up and heart beat
+#include "can_msg_id.h" //sync up and heart beat
+#include "io.hpp"
+ #include <cstring>   //for memcpy
+
+
+
 
 
 /* Custom Debug Print Function */
@@ -50,7 +57,14 @@
 
 #define FILTER_ACCESS_TIMEOUT           ( 1 )
 
-#define MAX_SENSOR_COUNT    (3)   //PING SENSOR
+#define MAX_SENSOR_COUNT              (3)   //PING SENSOR
+
+#define PING_CAN                      (can2) //Ping to can2
+#define PING_BAUD                     (100)  //baud rate
+#define PING_TIMEOUT                  (0)    //timeout
+#define PING_HEARTBEAT_ERROR_LED      (1)    //LED1 for heartbeat error
+
+
 
 // This enumeration matches the distance of the obstacle for PING SENSOR
 typedef enum {
@@ -294,7 +308,19 @@ class Ultra_Sonic_4ping
 
 };
 
+//Get the sensor readings with interrupts
 void interrupt_based_ping_sensor();
+
+//Power sync up
+void ping_powerupsync(void);
+
+//Heartbeat
+void ping_heartbeat(void);
+bool bus_reset();
+
+void test_bus_off_cb(uint32_t d);
+void data_ovr_cb(uint32_t d);
+
 
 // Macro to get Singleton Instance
 #define US_FRONT UsonicFrontSensor::getInstance()
