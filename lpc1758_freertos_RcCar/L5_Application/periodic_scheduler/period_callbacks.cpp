@@ -32,46 +32,42 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "queue.h"
-//#include "can_msg_id.h"
+#include "can_msg_id.h"
 #include "can.h"
 #include "string.h"
+
+bool bus_off;
+
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 void period_1Hz(void)
 {
-    LE.toggle(1);
+    if(bus_off == true)
+    {
+        bus_reset();
+        bus_off = false;
+    }
+    else
+    {
+        ping_heartbeat();
+    }
+
 }
 
 void period_10Hz(void)
 {
-    //      can_msg_t msg;
-    //      dist_sensor all_sensor;
-
-    LE.toggle(2);
-
-    interrupt_based_ping_sensor();
-
-#if 0        //sending the obstacle zone
-         all_sensor.front_center = obstacle_zone ;
-
-         msg.msg_id = DISTANCE_SENSOR_ID ;
-         msg.frame_fields.is_29bit = 0;      //11-bit
-         msg.frame_fields.data_len = sizeof(dist_sensor);
-         memcpy(&msg.data.qword,&all_sensor,sizeof(dist_sensor));
-         CAN_tx(can1,&msg,0);
-#endif
-
+     interrupt_based_ping_sensor();
 }
 
 void period_100Hz(void)
 {
-    LE.toggle(3);
+
 }
 
 
 void period_1000Hz(void)
 {
-    LE.toggle(4);
+
 }
