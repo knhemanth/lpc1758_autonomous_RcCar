@@ -26,9 +26,9 @@
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include "geo_controller.hpp"
-//#include "io.hpp"
+#include "io.hpp"
 #include "imu.hpp"
-//#include "soft_timer.hpp"
+#include "soft_timer.hpp"
 #include "stdio.h"
 #include "stdlib.h"
 #include "GPS.hpp"
@@ -50,7 +50,7 @@
  */
 int main(void)
 {
-  //  SoftTimer init_timer(GEO_INIT_LED_TIME);
+    SoftTimer init_timer(GEO_INIT_LED_TIME);
     gps_init();
     /**
      * A few basic tasks for this bare-bone system :
@@ -68,7 +68,7 @@ int main(void)
    // scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
     /* Call controller init routine before starting periodic call backs */
-    bool status = geo_controller_init();
+   // bool status = geo_controller_init();
 
 
     /* If init failed there is no point in continuing */
@@ -88,6 +88,26 @@ int main(void)
    // }
 
    scheduler_add_task(new IMUTask(PRIORITY_CRITICAL));
+
+    /* Call controller init routine before starting periodic call backs */
+    bool status = geo_controller_init();
+
+    /* If init failed there is no point in continuing */
+    // XXX: Keep trying to sync forever, no point dying here
+    // DONE: The init function will try to sync forever. This case should never happen
+    init_timer.reset();
+    if( !status )
+    {
+        LOG_ERROR("ERROR!!!! Geo Controller - This should never happen\n");
+        while( 1 )
+        {
+            LE.toggle(1);
+            init_timer.restart();
+            while( !init_timer.expired());
+        }
+    }
+
+    scheduler_add_task(new IMUTask(PRIORITY_CRITICAL));
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
     #if 1

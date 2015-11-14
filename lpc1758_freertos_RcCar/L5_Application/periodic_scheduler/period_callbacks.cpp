@@ -48,7 +48,6 @@ void period_1Hz(void)
    // geo_send_heartbeat();
    // geo_check_master_reset();
 
-
 }
 
 void period_10Hz(void)

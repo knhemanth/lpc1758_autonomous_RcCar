@@ -4,6 +4,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../L4_IO/src/GPS.cpp \
 ../L4_IO/src/geo_controller.cpp \
 ../L4_IO/src/gpio.cpp \
 ../L4_IO/src/imu.cpp \
@@ -11,6 +12,7 @@ CPP_SRCS += \
 ../L4_IO/src/storage.cpp 
 
 OBJS += \
+./L4_IO/src/GPS.o \
 ./L4_IO/src/geo_controller.o \
 ./L4_IO/src/gpio.o \
 ./L4_IO/src/imu.o \
@@ -18,6 +20,7 @@ OBJS += \
 ./L4_IO/src/storage.o 
 
 CPP_DEPS += \
+./L4_IO/src/GPS.d \
 ./L4_IO/src/geo_controller.d \
 ./L4_IO/src/gpio.d \
 ./L4_IO/src/imu.d \
@@ -29,7 +32,7 @@ CPP_DEPS += \
 L4_IO/src/%.o: ../L4_IO/src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: Cross ARM C++ Compiler'
-	arm-none-eabi-g++ -mcpu=cortex-m3 -mthumb -Os -fmessage-length=0 -ffunction-sections -fdata-sections -Wall -Wshadow -Wlogical-op -Wfloat-equal -DBUILD_CFG_MPU=0 -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\newlib" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\L0_LowLevel" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\L1_FreeRTOS" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\L1_FreeRTOS\include" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\L1_FreeRTOS\portable" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\L2_Drivers" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\L2_Drivers\base" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\L3_Utils" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\L3_Utils\tlm" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\L4_IO" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\L4_IO\fat" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\L4_IO\wireless" -I"C:\SJSU\Fall_2015\Cmpe243\GIT\RCCar_Project_Src\lpc1758_freertos_RcCar\L5_Application" -std=gnu++11 -fabi-version=0 -fno-exceptions -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -c -o "$@" "$<"
+	arm-none-eabi-g++ -mcpu=cortex-m3 -mthumb -Os -fmessage-length=0 -ffunction-sections -fdata-sections -Wall -Wshadow -Wlogical-op -Wfloat-equal -DBUILD_CFG_MPU=0 -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\newlib" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L0_LowLevel" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L1_FreeRTOS" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L1_FreeRTOS\include" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L1_FreeRTOS\portable" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L2_Drivers" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L2_Drivers\base" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L3_Utils" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L3_Utils\tlm" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L4_IO" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L4_IO\fat" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L4_IO\wireless" -I"C:\Users\Chitrang\Downloads\SJSU_Dev\projects\my_gitlab\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L5_Application" -std=gnu++11 -fabi-version=0 -fno-exceptions -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -c -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
