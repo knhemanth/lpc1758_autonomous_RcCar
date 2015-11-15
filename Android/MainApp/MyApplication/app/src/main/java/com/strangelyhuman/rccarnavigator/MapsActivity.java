@@ -60,7 +60,12 @@ import javax.xml.transform.Source;
 
         private GoogleMap mMap; // Might be null if Google Play services APK is not available.
         ArrayList<LatLng> MarkerPoints;
+
         private static String TAG = "Maps Activity";
+        String CarRoute = "";
+        int Count_Ordinates = 0;
+        double destinationLat;
+        double destinationLon;
 
         Button btnOn, btnOff,btOn,btConnect,btdisconnect;
         int BT_CONNECT_CODE = 1;
@@ -213,10 +218,13 @@ import javax.xml.transform.Source;
 
                     if (MarkerPoints.size() == 2) {
                         options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-                        options.title("Destination");
+                        options.title("Destination" + " " + point.latitude + " " + point.longitude);
                         options.draggable(true);
                         Toast.makeText(MapsActivity.this, "Add a Destination Marker", Toast.LENGTH_SHORT).show();
                     }
+
+                 // DestinationMarker += MarkerPoints.get(1).latitude + " " + MarkerPoints.get(1).longitude;
+
 
                     //add marker to the map
                     mMap.addMarker(options);
@@ -224,6 +232,9 @@ import javax.xml.transform.Source;
                         LatLng origin = MarkerPoints.get(0);
                         LatLng destination = MarkerPoints.get(1);
                         //getting a string for the directions api
+                        destinationLat = destination.latitude;
+                        destinationLon = destination.longitude;
+                        Log.d(TAG, Double.toString(destinationLat) + " " + Double.toString(destinationLon));
                         String url = getDirectionsUrl(origin, destination);
                         String elevationUrl = getElevationUrl(origin, destination);
                         //Toast.makeText(MapsActivity.this, elevationUrl, Toast.LENGTH_LONG).show();
@@ -504,27 +515,39 @@ import javax.xml.transform.Source;
                     //fetching ith route
                     List<HashMap<String, String>> path = result.get(i);
 
+                    CarRoute = "";
+                    Count_Ordinates = 0;
                     //fetching points in the ith route
                     for (int j = 0; j < path.size(); j++) {
                         HashMap<String, String> point = path.get(j);
 
                         double lat = Double.parseDouble(point.get("lat"));
                         double lng = Double.parseDouble(point.get("lng"));
+
                         LatLng position = new LatLng(lat, lng);
-                        Log.d(TAG, position.toString());
-                        if ((j % 2 == 0) && (j != 0))
+                        //CarRoute +=  "" + lat + " " + lng + " ";
+                        //Log.d(TAG, CarRoute);
+                        //Log.d(TAG, position.toString());
+                        if ((j % 2 == 0)) {
                             mMap.addMarker(markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
                                     .position(position)
                                     .title("latitude: " + lat + ", " + "longitude: " + lng));
+                            CarRoute += "" + lat + " " + lng + " ";
+                            ++Count_Ordinates;
+                        }
+
                         points.add(position);
 
                     }
+                    CarRoute += destinationLat + " " + destinationLon;
+                    Log.d(TAG, CarRoute);
+                    Log.d(TAG, Integer.toString(Count_Ordinates));
                     //adding all points in the route to lineOptions
                     lineOptions.addAll(points);
                     lineOptions.width(5);
                     lineOptions.color(Color.BLUE);
 
-                    //mMap.addPolyline(lineOptions);
+
                 }
                 //draw polyline on map
                 mMap.addPolyline(lineOptions);

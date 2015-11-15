@@ -7,7 +7,7 @@ App combines the mapping of Aditya's repository with the Bluetooth connections o
 - Basic Integration
 - Adding buttons
 
-"Integration done"
+" Basic Integration done"
 - Connects with the Bluetooth Module
 
 
