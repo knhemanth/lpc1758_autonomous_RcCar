@@ -67,7 +67,7 @@ import javax.xml.transform.Source;
         double destinationLat;
         double destinationLon;
 
-        Button btnOn, btnOff,btOn,btConnect,btdisconnect;
+        Button btnOn, btnOff,btOn,btConnect,btdisconnect, sndrt;
         int BT_CONNECT_CODE = 1;
         int connect = 0;
         private BluetoothAdapter btAdapter;
@@ -134,7 +134,7 @@ import javax.xml.transform.Source;
             btOn = (Button) findViewById(R.id.btOn);
             btConnect = (Button) findViewById(R.id.btConnect);
             btdisconnect = (Button)findViewById(R.id.btdisconnect);
-
+            sndrt = (Button) findViewById(R.id.sndrt);
             btAdapter = BluetoothAdapter.getDefaultAdapter();
 
             btOn.setOnClickListener(new View.OnClickListener() {
@@ -177,6 +177,17 @@ import javax.xml.transform.Source;
                     if(connect == 1) {
                         disconnect();
                     }
+                }
+            });
+
+            sndrt.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String btsend = Double.toString(destinationLat);
+                    Log.d(TAG, btsend);
+                    sendData(".\n");
+                    Toast.makeText(getBaseContext(), "Sending Route...", Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, CarRoute);
                 }
             });
 
