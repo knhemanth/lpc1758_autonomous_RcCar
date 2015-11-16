@@ -29,10 +29,10 @@
  */
 
 #include <stdint.h>
-#include "io.hpp"
 #include "periodic_callback.h"
-
-
+#include "c_tlm_var.h"
+#include "sensor_controller.hpp"
+#include "can_common.hpp"
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -40,34 +40,41 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-    return true; // Must return true upon success
+    bool status = false;
+    do {
+    status = can_init();             // Initialize CAN bus
+    }
+    while(!status);                 // If CAN bus is not ready then no need to go further
+
+    return true;                    // Must return true upon success
 }
 
 /// Register any telemetry variables
 bool period_reg_tlm(void)
 {
     // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
+    tlm_component* comp = tlm_component_add("SENSOR");
+   // TLM_REG_VAR(comp, motor_msg,tlm_char); // Macro to register transmitted sensor_msg
     return true; // Must return true upon success
 }
 
-
-
 void period_1Hz(void)
 {
-    LE.toggle(1);
+    check_bus_off();
 }
 
 void period_10Hz(void)
 {
-    LE.toggle(2);
+    get_sensor_data();
+    can_sensor_tx_task();
 }
 
 void period_100Hz(void)
 {
-    LE.toggle(3);
+
 }
 
 void period_1000Hz(void)
 {
-    LE.toggle(4);
+
 }

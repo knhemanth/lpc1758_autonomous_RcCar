@@ -24,8 +24,9 @@
  *
  */
 #include "tasks.hpp"
-#include "examples/examples.hpp"
-
+#include <stdio.h>
+#include <FreeRTOS.h>
+//#include "can_common.hpp"
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
  * for details.  There is a very simple example towards the beginning of this class's declaration.
@@ -40,6 +41,7 @@
  *        In either case, you should avoid using this bus or interfacing to external components because
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
+
 int main(void)
 {
     /**
@@ -52,14 +54,15 @@ int main(void)
      * such that it can save remote control codes to non-volatile memory.  IR remote
      * control codes can be learned by typing the "learn" terminal command.
      */
-    scheduler_add_task(new terminalTask(PRIORITY_HIGH));
+
+    //scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
-    scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
+    //scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
-    #if 0
-    scheduler_add_task(new periodicSchedulerTask());
+    #if 1
+        scheduler_add_task(new periodicSchedulerTask());
     #endif
 
     /* The task for the IR receiver */
@@ -124,5 +127,5 @@ int main(void)
     #endif
 
     scheduler_start(); ///< This shouldn't return
-    return -1;
+    return 0;
 }

@@ -1,11 +1,19 @@
-#ifndef __CAN_MSG_ID_H__
-#define __CAN_MSG_ID_H__
+/*
+ * can_msg_id.hpp
+ *
+ *  Created on: Nov 1, 2015
+ *      Author: Dhruv
+ */
+
+#ifndef L5_APPLICATION_CAN_MSG_ID_HPP_
+#define L5_APPLICATION_CAN_MSG_ID_HPP_
 
 #ifdef __cplusplus
 extern "C"{
 #endif
 #include <stdint.h>
 #include <stdbool.h>
+#include "can.h"
 
 // CAN message IDS
 
@@ -66,7 +74,7 @@ typedef struct{
 }__attribute__((__packed__)) rst_msg;
 
 
-/* 
+/*
  * Master acknowledges each controller
  * Sent by: Master controller
  * Received by: All controllers
@@ -81,8 +89,8 @@ typedef struct{
 }__attribute__((__packed__)) master_sync;
 
 
-/* 
- * Heart-beat message for each controller 
+/*
+ * Heart-beat message for each controller
  * Sent by: All controllers
  * Received by: Master controller
  */
@@ -92,8 +100,8 @@ typedef struct{
 
 }__attribute__((__packed__)) heart_beat;
 
-/* 
- * Run mode for the vehicle. 
+/*
+ * Run mode for the vehicle.
  * TODO: Define enum for each mode
  *
  * Sent by: Bluetooth module [ original data from the Android app ]
@@ -122,10 +130,10 @@ typedef struct{
 
 }__attribute__((__packed__)) dist_sensor;
 
-/* 
+/*
  * Indication to motor IO for driving.
  *
- * Sent by: Master controller 
+ * Sent by: Master controller
  * Received by: MotorIO controller
  */
 typedef struct{
@@ -135,8 +143,8 @@ typedef struct{
 
 }__attribute__((__packed__)) motor_direction;
 
-/* 
- * Indicate number of check-points in the route. Then send each check point using check-point data 
+/*
+ * Indicate number of check-points in the route. Then send each check point using check-point data
  *
  * Sent by: Bluetooth module [ After receiving data from Android app ]
  * Received by: Master controller
@@ -147,8 +155,8 @@ typedef struct{
 
 }__attribute__((__packed__)) chk_point_snd;
 
-/* 
- * Check-point data sent for each check-point 
+/*
+ * Check-point data sent for each check-point
  *
  * Sent by: Bluetooth module
  * Received by: Master controller
@@ -160,16 +168,16 @@ typedef struct{
 
 }__attribute__((__packed__)) chk_point_data;
 
-/* 
- * Send destination lattitude and longitude to the geo controller. Here destination will be the next check-point 
+/*
+ * Send destination lattitude and longitude to the geo controller. Here destination will be the next check-point
  *
  * Sent by: Master controller
  * Received by: Geo controller
  */
 typedef chk_point_data geo_loc; // use geo_loc instead of chk_point_data
 
-/* 
- * Indicate speed measured by GPS, the current heading and bearing from IMU 
+/*
+ * Indicate speed measured by GPS, the current heading and bearing from IMU
  *
  * Sent by: Geo controller
  * Received by: Master controller and IO controller
@@ -182,8 +190,8 @@ typedef struct{
 
 }__attribute__((__packed__)) geo_spd_angle;
 
-/* 
- * Light and battery sensor readings 
+/*
+ * Light and battery sensor readings
  *
  * Sent by: Sensor controller
  * Received by: IO controller
@@ -195,7 +203,32 @@ typedef struct{
 
 }__attribute__((__packed__)) lght_batt_reading;
 
+typedef enum {
+    stop = 0,
+    slow,
+    normal,
+    fast,
+    turbo
+} speed_mode;
+
+typedef enum{
+    no_obstacle,
+    far,
+    mid,
+    near
+} sensor_zone;
+
+typedef enum {
+    left = 0,
+    s_left,
+    straight,
+    s_right,
+    right,
+    back
+} direction_t;
+
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif /* L5_APPLICATION_CAN_MSG_ID_HPP_ */
