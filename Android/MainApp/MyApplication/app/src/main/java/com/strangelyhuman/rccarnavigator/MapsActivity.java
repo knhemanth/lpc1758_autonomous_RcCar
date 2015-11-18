@@ -243,8 +243,10 @@ import javax.xml.transform.Source;
                         LatLng origin = MarkerPoints.get(0);
                         LatLng destination = MarkerPoints.get(1);
                         //getting a string for the directions api
-                        destinationLat = destination.latitude;
-                        destinationLon = destination.longitude;
+                        int tempLat = (int) (destination.latitude * 1000000);
+                        destinationLat = tempLat / 1000000d;
+                        int tempLon = (int) (destination.longitude * 1000000);
+                        destinationLon = tempLon / 1000000d;
                         Log.d(TAG, Double.toString(destinationLat) + " " + Double.toString(destinationLon));
                         String url = getDirectionsUrl(origin, destination);
                         String elevationUrl = getElevationUrl(origin, destination);
