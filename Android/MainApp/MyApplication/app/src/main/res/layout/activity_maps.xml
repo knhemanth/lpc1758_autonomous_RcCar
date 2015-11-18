@@ -48,6 +48,13 @@
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true" />
 
+            <Button
+                style="?android:buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Send Route"
+                android:id="@+id/sndrt" />
+
         </TableRow>
 
         <TableRow
