@@ -48,20 +48,19 @@ bool bluetooth_controller_sync()
 
     //Initialize can bus for sync frame transmission
     can_init_stat = CAN_init(can1, can_baud_kbps, can_rx_queue_size, can_tx_queue_size, bus_off_cb, data_ovr_cb);
-#if test_can_bt
-    puts("can init started\n");
-#endif
+
+    PRINT("can init started\n");
+
     master_sync *ref_obj;
     if(!can_init_stat)
     {
         LOG_ERROR("Bluetooth controller CAN bus could not be initialiazed");
         return can_init_stat;
     }
-#if test_can_bt
     else
-        puts("\ncan init successful");
-#endif
-    const can_std_id_t slist[]      = {CAN_gen_sid(can1, MASTER_SYNC_ACK_ID), CAN_gen_sid(can1, 0xFFFF)};
+        PRINT("\ncan init successful");
+
+    const can_std_id_t slist[]      = {CAN_gen_sid(can1, MASTER_SYNC_ACK_ID), CAN_gen_sid(can1, CHECKPOINT_REQ_ID)};
     CAN_setup_filter(slist, 2, NULL, 0, NULL, 0, NULL, 0);
     //CAN_bypass_filter_accept_all_msgs();
     CAN_reset_bus(can1);
@@ -73,50 +72,49 @@ bool bluetooth_controller_sync()
 
     do
     {
-#if test_can_bt
-        printf("\n can tx status = %d",sync_tx_status);
-#endif
+        PRINT("\n can tx status = %d",sync_tx_status);
+
         sync_tx_status = CAN_tx(can1, &tx_mssg,BT_CNTRL_TIMEOUT_CAN);
-#if test_can_bt
-        puts("\ncan tx started");
-        printf("\n can tx status = %d",sync_tx_status);
-#endif
+
+        PRINT("\ncan tx started");
+        PRINT("\n can tx status = %d",sync_tx_status);
+
         if(sync_tx_status)
         {
-#if test_can_bt
-            puts("\ncan tx successful no errors");
-#endif
+
+            PRINT("\ncan tx successful no errors");
+
         }
 
         else
         {
             LOG_ERROR("Bluetooth can message cannot be sent");
-#if test_can_bt
-           puts("\ncan tx unsuccessfull");
-#endif
+
+           PRINT("\ncan tx unsuccessfull");
+
         }
 
         can_rx_timer.restart();
         while(!can_rx_timer.expired());
 
         status = CAN_rx(can1,&master_rx_mssg, BT_CNTRL_TIMEOUT_CAN);
-#if test_can_bt
-        puts("\ncan rx started");
-#endif
+
+        PRINT("\ncan rx started");
+
         if(status)
         {
             ref_obj = (master_sync*)&(master_rx_mssg.data.bytes[0]);
-#if test_can_bt
-            puts("\ncan rx successful");
-#endif
+
+            PRINT("\ncan rx successful");
+
             if((master_rx_mssg.msg_id == MASTER_SYNC_ACK_ID) && (ref_obj->ack_bluetooth == 1))
                 sync_ack_status = true;
         }
 
     }while(sync_ack_status == false);
-#if test_can_bt
-    puts("\nack received  successful");
-#endif
+
+    PRINT("\nack received successful\n");
+
     return sync_ack_status;
 }
 

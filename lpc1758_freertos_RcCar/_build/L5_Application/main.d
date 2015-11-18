@@ -43,7 +43,8 @@ L5_Application/main.o: ../L5_Application/main.cpp \
  ../L5_Application/examples/rn_xv_task.hpp \
  C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L2_Drivers/can.h \
  ../L5_Application/bluetooth_controller.hpp \
- ../L5_Application/can_msg_id.h
+ ../L5_Application/can_msg_id.h \
+ C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L4_IO/gpio.hpp
 
 ../L5_Application/tasks.hpp:
 
@@ -134,3 +135,5 @@ C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L2_Drivers/can.h:
 ../L5_Application/bluetooth_controller.hpp:
 
 ../L5_Application/can_msg_id.h:
+
+C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L4_IO/gpio.hpp:

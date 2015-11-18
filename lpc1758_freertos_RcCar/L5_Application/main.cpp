@@ -31,16 +31,12 @@
 #include "can.h"
 #include "bluetooth_controller.hpp"
 #include "can_msg_id.h"
-
-#define baud_rate 9600
-#define bt_task_mem 1000
-#define bt_rx_size 64
-#define bt_tx_size 64
-#define bt_data_len 8
+#include "gpio.hpp"
 
 can_msg_t can_mssg_bt;
 can_msg_t bt_can_hb;
 bool sync_stat = false;
+bool bt_toggle_pwon = false;
 
 SemaphoreHandle_t binary_sem = 0;
 /**
@@ -70,9 +66,6 @@ class bt_uart_task : public scheduler_task
         {
             Uart3 &bt_uart = Uart3::getInstance();
             bt_uart.init(baud_rate, bt_rx_size, bt_tx_size);
-            can_mssg_bt.msg_id = BLUETOOTH_SYNC_ID;
-            can_mssg_bt.frame_fields.data_len = 0;
-            can_mssg_bt.frame_fields.is_29bit = 0;
 
 #if heart_beat_enable
             bt_can_hb.msg_id = BLUETOOTH_HEARTBEAT_ID;
@@ -89,8 +82,6 @@ class bt_uart_task : public scheduler_task
            if(xSemaphoreTake(binary_sem, 100))
            {
            Uart3 &bt_uart = Uart3::getInstance();
-
-
            char *bt_str;
            bt_str = bt_uart.uart3_gets();
 
@@ -100,7 +91,7 @@ class bt_uart_task : public scheduler_task
            can_mssg_bt.frame_fields.is_29bit = 0;
 #endif
 
-           for(int i = 0;i < bt_data_len; i++)
+           for(int i = 0;i < can_mssg_len; i++)
            {
                can_mssg_bt.data.bytes[i] = (uint8_t)(*(bt_str + i));
                can_mssg_bt.data.bytes[i] -= 48;
@@ -109,16 +100,16 @@ class bt_uart_task : public scheduler_task
 
             status_bt_can_tx = CAN_tx(can1, &can_mssg_bt, 10);
 
-#if test_can_bt
             if(status_bt_can_tx)
-                puts("\nbt data sent on can bus successful");
+                PRINT("\nbt data sent on can bus successful");
             else
-                puts("\nbt data send on can bus unsuccessful");
-#endif
+                PRINT("\nbt data send on can bus unsuccessful");
 
 }
+           PRINT("\nsemaphore after");
            return true;
         }
+
 };
 
 int main(void)

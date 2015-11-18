@@ -22,7 +22,8 @@ L2_Drivers/src/uart3.o: ../L2_Drivers/src/uart3.cpp \
  C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L1_FreeRTOS\include/tasks_mod.h.inc \
  C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L2_Drivers\base/char_dev.hpp \
  C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L0_LowLevel/LPC17xx.h \
- C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L3_Utils/singleton_template.hpp
+ C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L3_Utils/singleton_template.hpp \
+ C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L5_Application/bluetooth_controller.hpp
 
 C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L2_Drivers/uart3.hpp:
 
@@ -71,3 +72,5 @@ C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L2_Drivers\base/cha
 C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L0_LowLevel/LPC17xx.h:
 
 C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L3_Utils/singleton_template.hpp:
+
+C:\SJSU\Cmpe240_autonomous_car_Fall15\lpc1758_freertos_RcCar\L5_Application/bluetooth_controller.hpp:

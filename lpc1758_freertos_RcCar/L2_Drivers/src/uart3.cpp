@@ -21,8 +21,8 @@
 #include "sys_config.h"  // sys_get_cpu_clock()
 #include "stdio.h"
 #include "semphr.h"
+#include "bluetooth_controller.hpp"
 
-#define bt_data_len 8
 char rec_str[bt_data_len];
 
 

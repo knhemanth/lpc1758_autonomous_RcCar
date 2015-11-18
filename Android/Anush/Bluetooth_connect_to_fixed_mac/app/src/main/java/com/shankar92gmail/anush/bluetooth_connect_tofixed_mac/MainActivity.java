@@ -24,7 +24,7 @@ package com.shankar92gmail.anush.bluetooth_connect_tofixed_mac;
 public class MainActivity extends Activity {
     private static final String TAG = "bluetooth1";
 
-    Button btnOn, btnOff,btOn,btConnect,btdisconnect;
+    Button btnOn, btnOff,btOn,btConnect,btdisconnect,sndrt;
     int BT_CONNECT_CODE = 1;
     int connect = 0;
     private BluetoothAdapter btAdapter;
@@ -42,6 +42,8 @@ public class MainActivity extends Activity {
 
     private static String tx_data2 = "00000000\n";
 
+    private static  String send_data = "37.33433 \n";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,6 +55,7 @@ public class MainActivity extends Activity {
         btOn = (Button) findViewById(R.id.btOn);
         btConnect = (Button) findViewById(R.id.btConnect);
         btdisconnect = (Button)findViewById(R.id.btdisconnect);
+        sndrt = (Button)findViewById(R.id.sndrt);
 
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         btOn.setOnClickListener(new OnClickListener() {
@@ -94,6 +97,16 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 if(connect == 1) {
                     disconnect();
+                }
+            }
+        });
+
+        sndrt.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (connect == 1) {
+                    sendData(send_data);
+                    Toast.makeText(getBaseContext(), "Turn off LED", Toast.LENGTH_SHORT).show();
                 }
             }
         });

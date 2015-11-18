@@ -51,4 +51,13 @@
         android:id="@+id/btdisconnect"
         android:layout_above="@+id/btnOn"
         android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Route"
+        android:id="@+id/sndrt"
+        android:layout_alignTop="@+id/btnOff"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="71dp" />
 </RelativeLayout>
