@@ -70,6 +70,7 @@ import javax.xml.transform.Source;
         Button btnOn, btnOff,btOn,btConnect,btdisconnect, sndrt;
         int BT_CONNECT_CODE = 1;
         int connect = 0;
+        int start_stop = 0;
         private BluetoothAdapter btAdapter;
         private BluetoothSocket btSocket;
         private OutputStream outStream = null;
@@ -81,8 +82,8 @@ import javax.xml.transform.Source;
         // MAC-address of Bluetooth module (you must edit this line)
         private static String address = "20:15:03:03:09:75";
 
-        private static String tx_data1 = "10000000\n";
-        private static String tx_data2 = "00000000\n";
+        private static String tx_data1 = "0 \n";
+        private static String tx_data2 = "0 \n";
 
 
 
@@ -146,18 +147,20 @@ import javax.xml.transform.Source;
 
             btnOn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    if(connect == 1) {
+                    if(connect == 1 && start_stop == 0) {
                         sendData(tx_data1);
-                        Toast.makeText(getBaseContext(), "Turn on LED", Toast.LENGTH_SHORT).show();
+                        start_stop = 1;
+                        Toast.makeText(getBaseContext(), "Car Start", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
 
             btnOff.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    if(connect == 1) {
+                    if(connect == 1 && start_stop == 1) {
                         sendData(tx_data2);
-                        Toast.makeText(getBaseContext(), "Turn off LED", Toast.LENGTH_SHORT).show();
+                        start_stop = 0;
+                        Toast.makeText(getBaseContext(), "Car Stop", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -183,11 +186,11 @@ import javax.xml.transform.Source;
             sndrt.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    String btsend = Double.toString(destinationLat);
-                    Log.d(TAG, btsend);
-                    sendData(".\n");
-                    Toast.makeText(getBaseContext(), "Sending Route...", Toast.LENGTH_SHORT).show();
-                    Log.d(TAG, CarRoute);
+                    if(connect == 1) {
+                        sendData("" + Count_Ordinates + " " + CarRoute + "\n");
+                        Toast.makeText(getBaseContext(), "Sending Route...", Toast.LENGTH_SHORT).show();
+                        Log.d(TAG, CarRoute);
+                    }
                 }
             });
 
@@ -243,9 +246,13 @@ import javax.xml.transform.Source;
                         LatLng origin = MarkerPoints.get(0);
                         LatLng destination = MarkerPoints.get(1);
                         //getting a string for the directions api
-                        int tempLat = (int) (destination.latitude * 1000000);
+                        double san_jose_lat = destination.latitude;
+                        double san_jose_lon = destination.longitude;
+                        san_jose_lat = san_jose_lat - 37d;
+                        san_jose_lon = (san_jose_lon*-1) - 121d;
+                        int tempLat = (int) (san_jose_lat * 1000000);
                         destinationLat = tempLat / 1000000d;
-                        int tempLon = (int) (destination.longitude * 1000000);
+                        int tempLon = (int) (san_jose_lon * 1000000);
                         destinationLon = tempLon / 1000000d;
                         Log.d(TAG, Double.toString(destinationLat) + " " + Double.toString(destinationLon));
                         String url = getDirectionsUrl(origin, destination);
@@ -545,14 +552,25 @@ import javax.xml.transform.Source;
                             mMap.addMarker(markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
                                     .position(position)
                                     .title("latitude: " + lat + ", " + "longitude: " + lng));
-                            CarRoute += "" + lat + " " + lng + " ";
+
+                            double templat_ = lat;
+                            double templon_ = lng;
+
+                            templat_ = templat_ - 37d;
+                            templon_ = (templon_*-1) - 121d;
+                            int temp_Lat = (int) (templat_ * 1000000);
+                            templat_ = temp_Lat / 1000000d;
+                            int temp_Lon = (int) (templon_ * 1000000);
+                            templon_ = temp_Lon / 1000000d;
+
+                            CarRoute += "" + templat_ + " " + templon_ + " ";
                             ++Count_Ordinates;
                         }
-
                         points.add(position);
 
                     }
                     CarRoute += destinationLat + " " + destinationLon;
+                    Count_Ordinates +=1;
                     Log.d(TAG, CarRoute);
                     Log.d(TAG, Integer.toString(Count_Ordinates));
                     //adding all points in the route to lineOptions
