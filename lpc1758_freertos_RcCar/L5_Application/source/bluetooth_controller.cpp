@@ -14,12 +14,6 @@
 #include "file_logger.h"
 #include "soft_timer.hpp"
 
-#define can_baud_kbps 100
-#define can_rx_queue_size 512
-#define can_tx_queue_size 512
-#define BT_SYNC_TIME 500
-#define BT_CNTRL_TIMEOUT_CAN 10
-
 static can_msg_t tx_mssg;
 static can_msg_t master_rx_mssg;
 bool can_bus_off_flag = false;
@@ -47,7 +41,7 @@ bool bluetooth_controller_sync()
     SoftTimer can_rx_timer(BT_SYNC_TIME);
 
     //Initialize can bus for sync frame transmission
-    can_init_stat = CAN_init(can1, can_baud_kbps, can_rx_queue_size, can_tx_queue_size, bus_off_cb, data_ovr_cb);
+    can_init_stat = CAN_init(can_controller, can_baud_kbps, can_rx_queue_size, can_tx_queue_size, bus_off_cb, data_ovr_cb);
 
     PRINT("can init started\n");
 
@@ -60,10 +54,10 @@ bool bluetooth_controller_sync()
     else
         PRINT("\ncan init successful");
 
-    const can_std_id_t slist[]      = {CAN_gen_sid(can1, MASTER_SYNC_ACK_ID), CAN_gen_sid(can1, CHECKPOINT_REQ_ID)};
+    const can_std_id_t slist[]      = {CAN_gen_sid(can_controller, MASTER_SYNC_ACK_ID), CAN_gen_sid(can_controller, CHECKPOINT_REQ_ID)};
     CAN_setup_filter(slist, 2, NULL, 0, NULL, 0, NULL, 0);
     //CAN_bypass_filter_accept_all_msgs();
-    CAN_reset_bus(can1);
+    CAN_reset_bus(can_controller);
 
     tx_mssg.msg_id = BLUETOOTH_SYNC_ID;
     tx_mssg.frame_fields.data_len = 0;
@@ -74,7 +68,7 @@ bool bluetooth_controller_sync()
     {
         PRINT("\n can tx status = %d",sync_tx_status);
 
-        sync_tx_status = CAN_tx(can1, &tx_mssg,BT_CNTRL_TIMEOUT_CAN);
+        sync_tx_status = CAN_tx(can_controller, &tx_mssg,BT_CNTRL_TIMEOUT_CAN);
 
         PRINT("\ncan tx started");
         PRINT("\n can tx status = %d",sync_tx_status);
@@ -97,7 +91,7 @@ bool bluetooth_controller_sync()
         can_rx_timer.restart();
         while(!can_rx_timer.expired());
 
-        status = CAN_rx(can1,&master_rx_mssg, BT_CNTRL_TIMEOUT_CAN);
+        status = CAN_rx(can_controller,&master_rx_mssg, BT_CNTRL_TIMEOUT_CAN);
 
         PRINT("\ncan rx started");
 

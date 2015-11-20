@@ -23,13 +23,6 @@
 #include "semphr.h"
 #include "bluetooth_controller.hpp"
 
-char rec_str[bt_data_len];
-
-
-//semaphore
-extern SemaphoreHandle_t binary_sem;
-
-
 /**
  * IRQ Handler needs to be enclosed in extern "C" because this is C++ file, and
  * we don't want C++ to "mangle" our function name.
@@ -40,8 +33,6 @@ extern "C"
 {
     void UART3_IRQHandler()
     {
-        long task_woken = 0;
-        xSemaphoreGiveFromISR(binary_sem, &task_woken);
         Uart3::getInstance().handleInterrupt();
     }
 }
@@ -67,30 +58,4 @@ Uart3::Uart3() : UartDev((unsigned int*)LPC_UART3_BASE)
 
 //uart3 puts() function for string tx on uart3
 
-void Uart3::uart3_puts(const char* c_string)
-{
-char* p = (char*) c_string;
-while(*p)
-{
-uart3_putchar(*p);
-p++;
-}
-uart3_putchar('\n');
-}
 
-
-
-//uart3 gets() function for string rx on uart3
-
-char* Uart3::uart3_gets()
-{
-
-int i = 0;
-do
-{
-rec_str[i] = uart3_getchar();
-i++;
-}while(rec_str[i-1] != '\n');
-return rec_str;
-
-}

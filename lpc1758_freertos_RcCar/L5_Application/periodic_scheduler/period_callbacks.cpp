@@ -39,30 +39,54 @@
 
 extern bool can_bus_off_flag;
 extern can_msg_t bt_can_hb;
+extern float way_pt_array[100];
+extern uint8_t way_pt_num;
+can_msg_t waypt_ack_mssg;
+bool waypt_ack = false;
+bool data_send_flag = false;
+int bt_send_loop = 0;
+extern chk_point_data *waypt_ptr;
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 
-
 void period_1Hz(void)
 {
     if(can_bus_off_flag)
-    {
-            CAN_reset_bus(can2);
-            can_bus_off_flag = false;
-    }
+        {
+                CAN_reset_bus(can_controller);
+                can_bus_off_flag = false;
+        }
+        else
+        {
+            CAN_tx(can_controller,&bt_can_hb,BT_CAN_HB_WAIT);
+        }
 
-    else
-    {
-        CAN_tx(can2,&bt_can_hb,BT_CAN_HB_WAIT);
-        LE.toggle(1);
-    }
 }
 
 void period_10Hz(void)
 {
-
+    if(!waypt_ack)
+    {
+        if(CAN_rx(can_controller, &waypt_ack_mssg, 0))
+        {
+            if((waypt_ack_mssg.msg_id == CHECKPOINT_REQ_ID) && (waypt_ack_mssg.data.bytes[0] == 1))
+            {
+                waypt_ack = true;
+                data_send_flag = true;
+            }
+        }
+    }
+    else if(data_send_flag)
+    {
+        if(bt_send_loop < (way_pt_num * 2))
+        {
+            waypt_ptr->latitude = way_pt_array[bt_send_loop];
+            waypt_ptr->longitude = way_pt_array[bt_send_loop + 1];
+            bt_send_loop += 2;
+        }
+    }
 }
 
 void period_100Hz(void)

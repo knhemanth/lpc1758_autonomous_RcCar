@@ -32,13 +32,21 @@
 #include "bluetooth_controller.hpp"
 #include "can_msg_id.h"
 #include "gpio.hpp"
+#include "char_dev.hpp"
 
-can_msg_t can_mssg_bt;
+char ch[1000];
+char *bt_str = ch;
+float way_pt_array[100];
+can_msg_t can_waypt_mssg;
 can_msg_t bt_can_hb;
+can_msg_t kill_mssg;
+can_msg_t can_mssg_bt;
+uint8_t way_pt_num;
+uint8_t way_pt[2];
+chk_point_data *waypt_ptr;
 bool sync_stat = false;
-bool bt_toggle_pwon = false;
+bool kill_car = true;
 
-SemaphoreHandle_t binary_sem = 0;
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
  * for details.  There is a very simple example towards the beginning of this class's declaration.
@@ -66,12 +74,14 @@ class bt_uart_task : public scheduler_task
         {
             Uart3 &bt_uart = Uart3::getInstance();
             bt_uart.init(baud_rate, bt_rx_size, bt_tx_size);
-
-#if heart_beat_enable
             bt_can_hb.msg_id = BLUETOOTH_HEARTBEAT_ID;
             bt_can_hb.frame_fields.data_len = 0;
             bt_can_hb.frame_fields.is_29bit = 0;
-#endif
+            bt_can_hb.data.qword = 0;
+            can_mssg_bt.msg_id = CHECKPOINT_DATA_ID;
+            can_mssg_bt.frame_fields.data_len = 8;
+            can_mssg_bt.frame_fields.is_29bit = 0;
+            waypt_ptr = (chk_point_data*)&(can_mssg_bt.data.bytes[0]);
 
             return true;
         }
@@ -79,37 +89,80 @@ class bt_uart_task : public scheduler_task
         bool run(void *p)
         {
            bool status_bt_can_tx = false;
-           if(xSemaphoreTake(binary_sem, 100))
-           {
+
            Uart3 &bt_uart = Uart3::getInstance();
-           char *bt_str;
-           bt_str = bt_uart.uart3_gets();
+           bool uart_stat = false;
 
-#if synch_disable
-           can_mssg_bt.msg_id = KILL_SWITCH_ID;
-           can_mssg_bt.frame_fields.data_len = 8;
-           can_mssg_bt.frame_fields.is_29bit = 0;
-#endif
+           uart_stat = bt_uart.gets(bt_str, bt_data_len, portMAX_DELAY );
 
-           for(int i = 0;i < can_mssg_len; i++)
+           if(uart_stat)
            {
-               can_mssg_bt.data.bytes[i] = (uint8_t)(*(bt_str + i));
-               can_mssg_bt.data.bytes[i] -= 48;
-               printf("\nval at %d = %d",i,can_mssg_bt.data.bytes[i]);
+               char *data_ptr = bt_str + 2;
+               char *end;
+               int loop_var = 0;
+               while((*(bt_str + loop_var)) != ' ')
+               {
+                   way_pt[loop_var] = (uint8_t)(*(bt_str + loop_var) - 48);
+                   loop_var++;
+               }
+               if(loop_var == 2)
+               {
+                   way_pt_num = (way_pt[0] * 10) + way_pt[1];
+
+               }
+               else
+                   way_pt_num = way_pt[0];
+
+               PRINT("\nNUM OF WAY POINTS  = %d",way_pt_num);
+
+               if(way_pt_num == 0)
+               {
+                   kill_car = !kill_car;
+                   kill_mssg.msg_id = KILL_SWITCH_ID;
+                   kill_mssg.frame_fields.data_len = 8;
+                   kill_mssg.frame_fields.is_29bit = 0;
+
+                   if(kill_car == false)
+                       kill_mssg.data.qword = start_car_mssg;
+                   else
+                       kill_mssg.data.qword = stop_car_mssg;
+
+                   PRINT("\n CAN MSSG SENT : %d",kill_mssg.data.bytes[0]);
+
+                   status_bt_can_tx = CAN_tx(can_controller, &kill_mssg, 10);
+
+                   if(status_bt_can_tx == true)
+                   {
+                       PRINT("\nbt data sent on can bus successful");
+                       status_bt_can_tx =  false;
+                   }
+                   else
+                   {
+                       PRINT("\nbt data send on can bus unsuccessful");
+                   }
+
+               }
+               else
+               {
+                  can_waypt_mssg.msg_id = CHECKPOINT_SEND_ID;
+                  can_waypt_mssg.frame_fields.data_len = 8;
+                  can_waypt_mssg.frame_fields.is_29bit = 0;
+
+                   for(int i = 0; i < (way_pt_num *2);i++)
+                   {
+                     way_pt_array[i] = strtof(data_ptr,&end);
+                     data_ptr = end;
+                     PRINT("\nlat long value is %f\n", way_pt_array[i]);
+                   }
+
+                   can_waypt_mssg.data.bytes[0] = way_pt_num;
+                   status_bt_can_tx = CAN_tx(can_controller, &can_waypt_mssg, 10);
+                   PRINT("Waypoint number can mssg send : %d", status_bt_can_tx);
+               }
            }
 
-            status_bt_can_tx = CAN_tx(can1, &can_mssg_bt, 10);
-
-            if(status_bt_can_tx)
-                PRINT("\nbt data sent on can bus successful");
-            else
-                PRINT("\nbt data send on can bus unsuccessful");
-
-}
-           PRINT("\nsemaphore after");
-           return true;
+          return true;
         }
-
 };
 
 int main(void)
@@ -124,9 +177,6 @@ int main(void)
      * such that it can save remote control codes to non-volatile memory.  IR remote
      * control codes can be learned by typing the "learn" terminal command.
      */
-    //create binary semaphore
-    vSemaphoreCreateBinary(binary_sem);
-
     sync_stat = bluetooth_controller_sync();
 
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));

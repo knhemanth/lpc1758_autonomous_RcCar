@@ -71,6 +71,7 @@ import javax.xml.transform.Source;
         int BT_CONNECT_CODE = 1;
         int connect = 0;
         int start_stop = 0;
+        int snd_route_en = 0;
         private BluetoothAdapter btAdapter;
         private BluetoothSocket btSocket;
         private OutputStream outStream = null;
@@ -186,7 +187,7 @@ import javax.xml.transform.Source;
             sndrt.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(connect == 1) {
+                    if((connect == 1) && (snd_route_en == 1)) {
                         sendData("" + Count_Ordinates + " " + CarRoute + "\n");
                         Toast.makeText(getBaseContext(), "Sending Route...", Toast.LENGTH_SHORT).show();
                         Log.d(TAG, CarRoute);
@@ -256,10 +257,9 @@ import javax.xml.transform.Source;
                         destinationLon = tempLon / 1000000d;
                         Log.d(TAG, Double.toString(destinationLat) + " " + Double.toString(destinationLon));
                         String url = getDirectionsUrl(origin, destination);
-                        String elevationUrl = getElevationUrl(origin, destination);
-                        //Toast.makeText(MapsActivity.this, elevationUrl, Toast.LENGTH_LONG).show();
                         DownloadTask downloadTask1 = new DownloadTask();
                         downloadTask1.execute(url);
+                        snd_route_en = 1;
                     }
                 }
             });
@@ -404,17 +404,6 @@ import javax.xml.transform.Source;
                     Toast.makeText(getBaseContext(),"BLUETOOTH TURN ON FAILED", Toast.LENGTH_LONG).show();
                 }
             }
-        }
-
-        private String getElevationUrl(LatLng origin, LatLng destination) {
-            //https://maps.googleapis.com/maps/api/elevation/json?path=36.578581,-118.291994|36.23998,-116.83171&samples=3&key=YOUR_API_KEY
-            String origin_string = origin.latitude + "," + origin.longitude;
-            String destination_string = destination.latitude + "," + destination.longitude;
-            String output = "json?";
-            String path = origin_string + "|" + destination_string;
-            String samples = "3";
-            String elevationUrl = "https://maps.googleapis.com/maps/api/elevation/" + output + "path=" + path + "&samples=" + samples + "&key=AIzaSyCwfUYxgA3FXrxX6RqlOJVbf16lHGa7uSs";
-            return elevationUrl;
         }
 
         private String getDirectionsUrl(LatLng origin, LatLng destination) {
@@ -577,8 +566,6 @@ import javax.xml.transform.Source;
                     lineOptions.addAll(points);
                     lineOptions.width(5);
                     lineOptions.color(Color.BLUE);
-
-
                 }
                 //draw polyline on map
                 mMap.addPolyline(lineOptions);
@@ -637,11 +624,11 @@ import javax.xml.transform.Source;
 
             //Click Listeners
 
-            //Button button4 = (Button) findViewById(R.id.TxButton);
             Button button5 = (Button) findViewById(R.id.clearButton);
             button5.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     //Clear all markers on screen
+                    snd_route_en = 0;
                     mMap.clear();
                 }
             });
