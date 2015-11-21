@@ -247,13 +247,9 @@ import javax.xml.transform.Source;
                         LatLng origin = MarkerPoints.get(0);
                         LatLng destination = MarkerPoints.get(1);
                         //getting a string for the directions api
-                        double san_jose_lat = destination.latitude;
-                        double san_jose_lon = destination.longitude;
-                        san_jose_lat = san_jose_lat - 37d;
-                        san_jose_lon = (san_jose_lon*-1) - 121d;
-                        int tempLat = (int) (san_jose_lat * 1000000);
+                        int tempLat = (int) (destination.latitude * 1000000);
                         destinationLat = tempLat / 1000000d;
-                        int tempLon = (int) (san_jose_lon * 1000000);
+                        int tempLon = (int) (destination.longitude * 1000000);
                         destinationLon = tempLon / 1000000d;
                         Log.d(TAG, Double.toString(destinationLat) + " " + Double.toString(destinationLon));
                         String url = getDirectionsUrl(origin, destination);
@@ -542,14 +538,12 @@ import javax.xml.transform.Source;
                                     .position(position)
                                     .title("latitude: " + lat + ", " + "longitude: " + lng));
 
-                            double templat_ = lat;
-                            double templon_ = lng;
+                            double templat_;
+                            double templon_;
 
-                            templat_ = templat_ - 37d;
-                            templon_ = (templon_*-1) - 121d;
-                            int temp_Lat = (int) (templat_ * 1000000);
+                            int temp_Lat = (int) (lat * 1000000);
                             templat_ = temp_Lat / 1000000d;
-                            int temp_Lon = (int) (templon_ * 1000000);
+                            int temp_Lon = (int) (lng * 1000000);
                             templon_ = temp_Lon / 1000000d;
 
                             CarRoute += "" + templat_ + " " + templon_ + " ";
