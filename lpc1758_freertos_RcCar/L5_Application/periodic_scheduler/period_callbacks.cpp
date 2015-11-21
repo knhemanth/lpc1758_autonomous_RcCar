@@ -67,13 +67,17 @@ void period_10Hz(void)
     if(update_from_app())
     {
 #endif
-        if(!avoid_obstacle())
+        if( navigation_mode() )
         {
-            // Navigate as per GPS and IMU data
-        }
-        else
-        {
-            LE.toggle(2);
+            if(!avoid_obstacle())
+            {
+                // Navigate as per GPS and IMU data
+                navigate_to_next_chkpt();
+            }
+            else
+            {
+                LE.toggle(2);
+            }
         }
 #if BT_APP
     }
@@ -82,7 +86,15 @@ void period_10Hz(void)
 
 void period_100Hz(void)
 {
+#if BT_APP
+    if(update_from_app())
+    {
+#endif
 
+
+#if BT_APP
+    }
+#endif
 }
 
 void period_1000Hz(void)

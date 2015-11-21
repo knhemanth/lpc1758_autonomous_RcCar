@@ -35,6 +35,11 @@ static bool motorio_sync = false;
 static bool bluetooth_sync = false;
 static bool geo_sync = false;
 static bool sensor_sync = false;
+static uint8_t nav_status = STOPPED;
+static uint32_t nav_index = 0;          // Index into the list of check points
+static uint32_t total_chk_pts = 0;      // Total number of check-points per navigation
+static float lat_array[MAX_LATS] = {0.0};
+static float long_array[MAX_LONGS] = {0.0};
 
 /* Static function prototypes */
 static bool power_up_sync_and_ack( void );
@@ -765,3 +770,133 @@ bool update_from_app(void)
     return command_from_app;
 }
 #endif
+
+bool navigation_mode(void)
+{
+    bool status = false;
+    can_fullcan_msg_t *can_msg_chkpt_ptr = NULL;
+    can_fullcan_msg_t can_msg_chkpt_data;
+    chk_point_snd *no_of_points;
+
+    // Function static variables
+
+
+    // Read Sensor Values for Obstacle Zones - Happens every 100Hz
+    can_msg_chkpt_ptr = CAN_fullcan_get_entry_ptr(can_id_chkpt_snd);
+
+    status = CAN_fullcan_read_msg_copy(can_msg_chkpt_ptr, &can_msg_chkpt_data);
+    if(status)
+    {
+        // Stop ongoing navigation
+        nav_status = STOPPED;
+
+        // Discard ongoing nav data
+        nav_index = 0;
+
+        // We have a new navigation request from the app
+        no_of_points = (chk_point_snd *) &(can_msg_chkpt_data.data.bytes[0]);
+        total_chk_pts = no_of_points->num_of_points;
+
+        // Acknowledge the bluetooth controller so that we can receive the nav points
+        // Send Stop Command over CAN to Motor in case command_from_app is false
+        chkpt_ack ack_data;
+        can_msg_t can_loc_ack_msg;
+
+        ack_data.ack = ACK;
+
+        can_loc_ack_msg.msg_id = CHECKPOINT_REQ_ID;
+        can_loc_ack_msg.frame_fields.is_29bit = false;
+        can_loc_ack_msg.frame_fields.data_len = sizeof(chkpt_ack);
+        memcpy(&can_loc_ack_msg.data.qword, &ack_data, sizeof(ack_data));
+
+        CAN_tx(MASTER_CNTL_CANBUS, &can_loc_ack_msg, MASTER_CNTL_CAN_DELAY);
+
+        // Start receiving new locations
+        nav_status = RX_CHKPTS;
+    }
+
+    else
+    {
+        /*
+         * Task list here will be:
+         *
+         * 1. If status is RX_CHKPTS - Continue receiving all the check-points
+         * 2. If status is RX_COMPLETE - Start navigation, setup the location array
+         * 3. If status is NAVIGATING - Do nothing
+         */
+
+        if( nav_status == NAVIGATING )
+            return NAV_TRUE;
+
+        else if( nav_status == RX_COMPLETE )
+        {
+            // Setup navigation array and move to NAVIGATING
+            nav_index = 0;
+
+            // Send the first update to the Geo controller
+            geo_loc first_loc;
+            can_msg_t can_loc_update_msg;
+
+            first_loc.latitude = lat_array[0];
+            first_loc.longitude = long_array[0];
+
+            can_loc_update_msg.msg_id = GEO_LOC_UPDATE_ID;
+            can_loc_update_msg.frame_fields.is_29bit = false;
+            can_loc_update_msg.frame_fields.data_len = sizeof(geo_loc);
+            memcpy(&can_loc_update_msg.data.qword, &first_loc, sizeof(first_loc));
+
+            CAN_tx(MASTER_CNTL_CANBUS, &can_loc_update_msg, MASTER_CNTL_CAN_DELAY);
+
+            nav_status = NAVIGATING;
+        }
+
+        else if( nav_status == RX_CHKPTS )
+        {
+            // Listen to the next check point
+            can_msg_chkpt_ptr = CAN_fullcan_get_entry_ptr(can_id_chkpt_data);
+            status = CAN_fullcan_read_msg_copy(can_msg_chkpt_ptr, &can_msg_chkpt_data);
+
+            if( !status )
+            {
+                // No data yet
+                return NAV_FALSE;
+            }
+
+            chk_point_data *chkpt;
+            chkpt = (chk_point_data *) &(can_msg_chkpt_data.data.bytes[0]);
+
+            lat_array[nav_index] = chkpt->latitude;
+            long_array[nav_index] = chkpt->longitude;
+            nav_index++;
+
+            if( nav_index == (total_chk_pts - 1) )
+            {
+                // We have all the check points
+                nav_status = RX_COMPLETE;
+            }
+        }
+    }
+
+    return NAV_FALSE;
+}
+
+void navigate_to_next_chkpt( void )
+{
+    // Right now print the check-points one at a time
+    if( nav_index == total_chk_pts )
+    {
+        // We have reached the destination
+        nav_status = STOPPED;
+        nav_index = 0;
+
+        return;
+    }
+
+    printf("Current Checkpoint: LAT %f, LONG %f\n", lat_array[nav_index], long_array[nav_index]);
+
+    // Check if checkpoint is reached
+
+    // if reached, increment nav_index and issue next check-point
+    nav_index++;
+
+}

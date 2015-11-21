@@ -48,7 +48,6 @@ enum CAN_MSG_ID
  *  3. SENSOR_SYNC
  *  4. BLUETOOTH_SYNC
  *  5. GEO_SYNC
- *  6. CHECKPOINT_REQ_ID
  */
 
 /*
@@ -146,6 +145,16 @@ typedef struct{
     uint64_t num_of_points;     // Number of check-points to be loaded
 
 }__attribute__((__packed__)) chk_point_snd;
+
+/*
+ * Acknowledge blue-tooth controller and
+ * request for nav points
+ */
+typedef struct{
+
+    uint64_t ack:8;         // Continuity counter that increments with every beat
+
+}__attribute__((__packed__)) chkpt_ack;
 
 /* 
  * Check-point data sent for each check-point 

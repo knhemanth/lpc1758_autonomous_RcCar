@@ -28,6 +28,9 @@
 #define MASTER_CNTL_NOHB_LED        ( 3 )
 #define MASTER_CAN_ERR_LED          ( 4 )
 
+#define MAX_LATS    (50)
+#define MAX_LONGS   (50)
+
 #define RESET   ( 1 )
 #define NORESET ( 0 )
 
@@ -35,6 +38,9 @@
 #define DEBUG ( 1 )
 #define ZONE_CALCULATION  ( 0 )
 #define OBSTACLE_AVOIDANCE ( 1 )
+
+#define NAV_TRUE    (true)
+#define NAV_FALSE   (false)
 
 
 // 1 - No Bluetooth App; 0 - Control via Bluetooth App
@@ -50,11 +56,21 @@ enum MASTER_ACK {
     ACK
 };
 
+enum NAV_STAT{
+    STOPPED=0,
+    RX_CHKPTS,
+    RX_COMPLETE,
+    NAVIGATING,
+    INVALID
+};
+
 /* Function Prototypes */
 bool master_controller_init( void );
 void check_heartbeat( void );
 bool avoid_obstacle(void);
 bool update_from_app(void);
+bool navigation_mode(void);
+void navigate_to_next_chkpt(void);
 void check_bus_off(void);
 
 char printRange(uint8_t zone);
