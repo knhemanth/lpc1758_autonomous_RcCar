@@ -12,8 +12,8 @@
 #include "uart2.hpp"
 #include "can_msg_id.h"
 
-extern geo_loc gps_data_byte;
-
+extern geo_location gps_data_dec;
+extern uint8_t speed_gps;
 extern Uart2 &uart2_ref;
 
 bool gps_init(void);
@@ -22,7 +22,7 @@ int get_long_degree(void);
 double get_long_minute(void);
 int get_lat_degree(void);
 double get_lat_minute(void);
-double get_decimal(int deg, double minute);
+float get_decimal(int deg, float minute);
 float get_speed_GPS(void);
 
 

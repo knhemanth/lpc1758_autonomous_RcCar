@@ -18,10 +18,11 @@
 #define PMTK_SET_BAUD_57600 "$PMTK251,57600*2C"
 #define PMTK_SET_NMEA_OUTPUT_RMCONLY "$PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29"
 
-geo_loc gps_data_byte;
+geo_location gps_data_dec; // Structure to fill the GPS data(Integer Format)
+
+uint8_t speed_gps;
 
 Uart2 &uart2_ref = Uart2::getInstance();
-
 
 bool gps_init(void){
 
@@ -39,24 +40,26 @@ bool gps_init(void){
 bool gps_data(){
 
     static int lat_degree = 0;
-    static double lat_minute = 0;
+    static float lat_minute = 0;
     static int long_degree = 0;
-    static double long_minute = 0;
-    static double lat_dec;
-    static double long_dec;
-    static double diff;
-    static float speed_mph = 0;
+    static float long_minute = 0;
+    static float lat_dec;
+    static float long_dec;
 
     lat_degree = get_lat_degree();
     lat_minute =get_lat_minute();
     long_degree =get_long_degree();
     long_minute =get_long_minute();
-    speed_mph = (1.150779)*get_speed_GPS();
+    speed_gps = (uint8_t)(1.150779)*get_speed_GPS();
 
 
      lat_dec = get_decimal(lat_degree, lat_minute);
      long_dec = get_decimal(long_degree, long_minute);
 
+     gps_data_dec.latitude = lat_dec;
+     gps_data_dec.longitude = (-1)*long_dec;
+
+/*
      diff = lat_dec - (int)lat_dec;
      gps_data_byte.gpsbyte1 = (int8_t) (diff*(100));
      diff = (diff*100) - (int) (diff*(100));
@@ -76,10 +79,11 @@ bool gps_data(){
      gps_data_byte.gpsbyte7 = (int8_t) (speed_mph);
      diff = speed_mph - (int)speed_mph;
      gps_data_byte.gpsbyte8 = (int8_t) (diff*(100));
+*/
 
   //$GPRMC,194509.000,A,4042.6142,N,07400.4168,W,2.03,221.11,160412,,,A*77
   //printf(" %d %lf %d %lf, %lf \n", lat_degree, lat_minute, long_degree, long_minute, speed_mph);
-    printf(" %lf %lf \n", lat_dec, long_dec);
+ //   printf(" %lf %lf \n", lat_dec, long_dec);
 
 /* This code is for the master side to recover the gps data
     static double lat_dec_rx;
@@ -97,7 +101,7 @@ bool gps_data(){
     return true;
 }
 
-double get_decimal(int deg, double minute){
+float get_decimal(int deg, float minute){
     return deg + minute/60;
 
 }

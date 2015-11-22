@@ -29,7 +29,6 @@
  */
 
 #include <stdint.h>
-//#include "io.hpp"
 #include "periodic_callback.h"
 #include "geo_controller.hpp"
 #include "GPS.hpp"
@@ -58,12 +57,22 @@ void period_10Hz(void)
      * Don't change the order of these calls.
      * If you change then call gps getters in both functions
      */
-
-  //  geo_send_heading();
-   //  gps_data();
-   //  geo_send_gps();
-         geo_send_heading();
-   //  geo_send_gps();
+    gps_data();
+    //  geo_send_gps();
+    geo_location current_checkpoint_data;
+    GEO_TO_SEND a;
+    if(receive_master_checkpoint(current_checkpoint_data))
+    {
+        a = GEO_DATA_TO_SEND;
+        geo_send_gps(a);
+        geo_send_heading(a, current_checkpoint_data);
+    }
+    else
+    {
+     a = GEO_DO_NOT_SEND;
+     geo_send_gps(a);
+     geo_send_heading(a,current_checkpoint_data);
+    }
 
 }
 

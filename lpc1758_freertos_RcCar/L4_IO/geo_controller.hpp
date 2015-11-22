@@ -2,7 +2,7 @@
  * geo_controller.hpp
  *
  *  Created on: Oct 25, 2015
- *      Author: Hemanth K N
+ *      Author: Chitrang
  */
 
 #ifndef L5_APPLICATION_GEO_CONTROLLER_HPP_
@@ -10,6 +10,7 @@
 
 #include "can.h"
 #include "file_logger.h"
+#include "can_msg_id.h"
 
 #define ENABLE_DBG  0
 
@@ -41,9 +42,11 @@ bool geo_controller_init( void );    // Initialization routing for Geo controlle
 extern "C"{
 #endif
 
-void geo_send_gps();
-void geo_send_heading();
+void geo_send_gps(GEO_TO_SEND);
+void geo_send_heading(GEO_TO_SEND, geo_location&);
 void geo_send_heartbeat();
+bool receive_master_checkpoint(geo_location&);
+uint16_t calculateBearing(geo_location&);
 void geo_check_master_reset();
 
 #ifdef __cplusplus

@@ -39,6 +39,11 @@ enum CAN_MSG_ID
     CAN_MSG_MAX_ID
 };
 
+enum GEO_TO_SEND{
+    GEO_DATA_TO_SEND,
+    GEO_DO_NOT_SEND
+};
+
 /*
  *  Data structures for CAN message IDs
  *
@@ -155,14 +160,8 @@ typedef struct{
  * Received by: Master controller
  */
 typedef struct checkpoint_data{
-        uint8_t gpsbyte1;
-        uint8_t gpsbyte2;
-        uint8_t gpsbyte3;
-        uint8_t gpsbyte4;
-        uint8_t gpsbyte5;
-        uint8_t gpsbyte6;
-        uint8_t gpsbyte7;
-        uint8_t gpsbyte8;
+        float latitude;
+        float longitude;
 
 }__attribute__((__packed__)) chk_point_data;
 
@@ -172,7 +171,7 @@ typedef struct checkpoint_data{
  * Sent by: Master controller
  * Received by: Geo controller
  */
-typedef chk_point_data geo_loc; // use geo_loc instead of chk_point_data
+typedef chk_point_data geo_location; // use geo_loc instead of chk_point_data
 
 /* 
  * Indicate speed measured by GPS, the current heading and bearing from IMU 
@@ -182,8 +181,9 @@ typedef chk_point_data geo_loc; // use geo_loc instead of chk_point_data
  */
 typedef struct{
 
-    uint16_t heading;            // Heading from the Geo controller
-    uint16_t bearing;            // Bearing calculated by the Geo controller
+    uint64_t heading:16;            // Heading from the Geo controller
+    uint64_t bearing:16;
+    uint64_t speed: 8;// Bearing calculated by the Geo controller
 
 }__attribute__((__packed__)) geo_spd_angle;
 
