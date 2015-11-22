@@ -30,11 +30,14 @@
 #include "can.h"    //sync up and heart beat
 #include "can_msg_id.h" //sync up and heart beat
 #include "io.hpp"
- #include <cstring>   //for memcpy
+#include <cstring>   //for memcpy
 
 
+#define HEARTBEAT ( 0 )    //1Hz periodic
+#define ZONE_INFO ( 1 )
+#define SENSOR_SEND_ON_CAN ( 0 )
 
-
+#define SINGLE_SENSOR ( 0 )
 
 /* Custom Debug Print Function */
 #if 0
@@ -62,21 +65,39 @@
 #define PING_CAN                      (can2) //Ping to can2
 #define PING_BAUD                     (100)  //baud rate
 #define PING_TIMEOUT                  (0)    //timeout
-#define PING_HEARTBEAT_ERROR_LED      (1)    //LED1 for heartbeat error
+#define PING_HEARTBEAT_ERROR_LED      (4)    //LED1 for heartbeat error
 
+#define RIGHT_LED ( 3 )
+#define FRONT_LED ( 2 )
+#define LEFT_LED ( 1 )
+#define MAX_VALUE     (400)
 
 
 // This enumeration matches the distance of the obstacle for PING SENSOR
 typedef enum {
-    N    = 0,  //near
-    M    = 1,  //middle
-    F    = 2,  //far
-    P   = 3,   //pass--no_obstacle:)
+    P = 0, //pass--no_obstacle:)
+    F,  // Far
+    M,  // Middle
+    N  // Near
 } distance_obstacle;
 
 //char zoneMessage[4][10] = {"N", "M", "F", "P"};
 
 //This enumeration matches the threshold of the obstacle for PING SENSOR
+#define TEST_INPUTS 1
+
+#if TEST_INPUTS
+
+typedef enum{
+    threshold_zero    = 0 ,
+    threshold_nearest = 60,
+    threshold_near    = 120,
+    threshold_middle  = 190,
+    threshold_far      = 300,
+} obs_thre;
+
+#else
+
 typedef enum{
     threshold_zero    = 0 ,
     threshold_nearest = 50,
@@ -84,6 +105,7 @@ typedef enum{
     threshold_middle  = 300,
     threshold_far      = 400,
 } obs_thre;
+#endif
 
 /* Sensor Filter Template
  * Performs Average Filtering.
@@ -156,7 +178,7 @@ class Sensor_Filter
 
     public:
 
-        Sensor_Filter(uint32_t bufSize = 5):
+        Sensor_Filter(uint32_t bufSize = 3):
             cBuf(bufSize),
             currentAverage(0),
             stableStream(false)
@@ -278,33 +300,39 @@ class Ultra_Sonic_4ping
             bool send_trig();
             static void echo_high_callback(void );  //Callback function for the Rising edge
             static void echo_low_callback(void );   //Callback function for the falling edge
-            static float ping_get_from_filter(void);//
+            double ping_get_from_filter(void);//
             bool recieve_from_queue(void);          //Returns a false if the queue is empty
                                                     //Returns a true if the queue is returning
-            float get_buffer_value();               //Returns a float buffer in which the queue element is being put
-            static void add_queue_value_to_filter(float );//Add the queue value to the filter
+            double get_buffer_value();               //Returns a float buffer in which the queue element is being put
+            void add_queue_value_to_filter(void);//Add the queue value to the filter
             static int get_zone(float avg);            //Returns the Zone of the obstacle
             static void display_zone(int a);
             static int index;
-            static float distance_value;
+            static double distance_value;
 
+            inline bool pinNotLow(void)
+            {
+                return echo_in.read();
+            }
+            static bool max_time_flag;
 
     private :
              GPIO trig_out;
              GPIO echo_in;
              int echo_pin;
              static SemaphoreHandle_t Trig_Sem;
-             static Sensor_Filter <double, double> avg_filter;
+             Sensor_Filter <double, double> avg_filter;
              //Parameters for ping callbacks functions
              static uint64_t up_time;
              static uint64_t down_time;
-             static uint32_t  diff_time;
+             static uint64_t  diff_time;
              //Queue for sharing the distance values
              //static QueueHandle_t xQueue1,xQueue2,xQueue3;
              static QueueHandle_t xQueue[MAX_SENSOR_COUNT];
-             float buff_for_recieve;
+             double buff_for_recieve;
              int instance;
              static int zone;
+
 
 };
 
