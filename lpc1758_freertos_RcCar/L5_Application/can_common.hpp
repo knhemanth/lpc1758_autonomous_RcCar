@@ -22,14 +22,14 @@
 #define SENSOR_CNTL_SYNC_MAX_TIME        ( GEO_CNTL_SYNC_TIME * 20 ) // Wait 10s max
 #define SENSOR_INIT_LED_TIME             ( 500 )
 
-#define SENSOR_CAN_ERR_LED               ( 1 )
-#define RESET                            ( 2 )
-#define BUS_OFF_LED                      ( 3 )
+#define SENSOR_CAN_ERR_LED               ( 4 )
+#define RESET                            ( 4)
+#define BUS_OFF_LED                      ( 4 )
 #define SENSOR_HB_LED                    ( 4 )
 
-#define ERROR_LED 1
-#define CAN_RX_LED      2
-#define CAN_TX_LED      3
+#define ERROR_LED       4
+#define CAN_RX_LED      4
+#define CAN_TX_LED      4
 
 /* basic structure to create/store 11bit CAN msg id,
  * used for creating filter list and for creating 11bit ids

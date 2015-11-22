@@ -28,7 +28,6 @@ extern "C" {
 
 
 
-/// Stack size of each of the period tasks
 extern const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES;
 
 bool period_init(void);

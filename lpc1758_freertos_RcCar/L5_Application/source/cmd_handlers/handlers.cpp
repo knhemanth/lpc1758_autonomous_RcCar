@@ -227,12 +227,10 @@ CMD_HANDLER_FUNC(logHandler)
         logger_log_raw(cmdParams());
     }
     else if ( (enablePrintf = cmdParams.beginsWith("enable ")) || cmdParams.beginsWith("disable ")) {
-        // command is: 'enableprint info/warning/error'
-
-        cmdParams.eraseFirstWords(1);
-        logger_msg_t type = cmdParams.beginsWithIgnoreCase("warn")  ? log_warn  :
-                            cmdParams.beginsWithIgnoreCase("error") ? log_error :
-                            cmdParams.beginsWithIgnoreCase("info")  ? log_info  : log_debug;
+        // command is: 'enable print info/warning/error'
+        logger_msg_t type = cmdParams.containsIgnoreCase("warn")  ? log_warn  :
+                            cmdParams.containsIgnoreCase("error") ? log_error :
+                            cmdParams.containsIgnoreCase("info")  ? log_info  : log_debug;
 
         logger_set_printf(type, enablePrintf);
         output.printf("%s logger printf for %s\n",
@@ -284,8 +282,8 @@ CMD_HANDLER_FUNC(catHandler)
     cmdParams.trimEnd(" ");
 
     char c = 0;
-    output.printf("Press a key to print one buffer at a time or enter 'x' to quit...\n");
-    output.getChar(&c, portMAX_DELAY);
+    //output.printf("Press a key to print one buffer at a time or enter 'x' to quit...\n");
+    //output.getChar(&c, portMAX_DELAY);
     if ('x' == c) {
         return true;
     }
@@ -312,7 +310,7 @@ CMD_HANDLER_FUNC(catHandler)
                     output.putChar(buffer[i]);
                 }
 
-                output.getChar(&c, portMAX_DELAY);
+                //output.getChar(&c, portMAX_DELAY);
                 if ('x' == c) {
                     break;
                 }

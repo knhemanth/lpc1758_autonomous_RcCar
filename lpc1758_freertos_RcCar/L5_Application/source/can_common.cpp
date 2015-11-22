@@ -14,7 +14,7 @@ static bool powerup_sync_sensor_controller( void );
 static void can_bus_off_callback(uint32_t dummy)
 {
     bus_off_state = true;
-    LE.set(1, true);
+    LE.set(ERROR_LED, true);
 }
 
 void data_over_callback( uint32_t icr_data )
@@ -29,7 +29,7 @@ void check_bus_off(void)
     {
         CAN_reset_bus(SENSOR_CNTL_CANBUS);
         bus_off_state = false;
-        LE.set(1, false);
+        LE.set(ERROR_LED, false);
     }
 }
 
