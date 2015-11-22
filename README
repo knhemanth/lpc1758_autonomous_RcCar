@@ -1,13 +1,15 @@
 -----------------------------------------------------------------------------
-To get started, have a look at lpc_freerots_xxxx/L5_Application/main.cpp and the example tasks.
+This is Sensor controller node's code. This node basically send all distance sensor's zone data over CAN bus to Master Controller to figure out Obstacle avoidance algorithm.
+Here we have used Ultrasonic sensors(from parallax) as a distance sensor.
+To get started, have a look at lpc_freerots_RcCar/L5_Application/main.cpp and the specific periodic_scheduler task.
 
-You can change a #define 0 to #define 1 for one example at a time and look
-through the code of each example.
+Look into lpc_freerots_RcCar/L5_Application/periodic_scheduler/period_callbacks.cpp file to figure out how all functions are working for 
+Sensor_controller as we have defined all different tasks in periodic functions itself.
 
-The general idea is to interact with the project through terminal commands.
------------------------------------------------------------------------------
-See "ChangeLog" for the changes made to the sample project source code.
------------------------------------------------------------------------------
+period_init() and period_reg_tlm() functions are calling only once before operating system starts and then period_1Hz(),
+period_10Hz(),period_100Hz(),period_1000Hz() functions will be called in that much repetative fixed interval.
 
-The razor_imu_9dof directory has the source code for running the imu sensor.
-Because it is a different platform, the source has been placed in its own directory.
+Make sure that priority of high frequency function is higher then low frequency functions.
+
+Means if we prioritize those periodic functions in higher order to lower order, then that will be as below.
+1000Hz > 100Hz > 10Hz > 1Hz
