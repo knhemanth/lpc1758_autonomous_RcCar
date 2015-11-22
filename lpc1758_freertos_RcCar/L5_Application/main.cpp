@@ -27,13 +27,13 @@
 #include "examples/examples.hpp"
 #include "can.h"
 #include "stdio.h"
-#include "3ultrasonic_sensor_interrupts.hpp"
+#include "ping_ultrasonic_sensor_interrupts.hpp"
 
 
 
 void sensor_controller_init()
 {
-    CAN_init(PING_CAN,PING_BAUD,8,8,&test_bus_off_cb,&data_ovr_cb);
+    CAN_init(PING_CAN, PING_BAUD, 8, 8, test_bus_off_cb, data_ovr_cb);
 
 }
 
@@ -68,6 +68,7 @@ int main(void)
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
+    sensor_controller_init();
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
     #if 1
@@ -135,7 +136,7 @@ int main(void)
         scheduler_add_task(new wifiTask(Uart3::getInstance(), PRIORITY_LOW));
     #endif
     
-    sensor_controller_init();
+
 
     scheduler_start(); ///< This shouldn't return
     return -1;
