@@ -27,7 +27,7 @@
  * For example, the 1000Hz take slot runs periodically every 1ms, and whatever you
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
-#include <3ultrasonic_sensor_interrupts.hpp>
+#include <ping_ultrasonic_sensor_interrupts.hpp>
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
@@ -44,30 +44,30 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 void period_1Hz(void)
 {
+
     if(bus_off == true)
     {
         bus_reset();
         bus_off = false;
     }
-    else
-    {
-        ping_heartbeat();
-    }
+
+#if HEARTBEAT
+     ping_heartbeat();
+#endif
 
 }
 
 void period_10Hz(void)
 {
-     interrupt_based_ping_sensor();
 }
+
 
 void period_100Hz(void)
 {
-
+   interrupt_based_ping_sensor();
 }
 
 
 void period_1000Hz(void)
 {
-
 }
