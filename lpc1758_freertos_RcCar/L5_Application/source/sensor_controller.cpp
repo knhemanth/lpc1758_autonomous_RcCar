@@ -30,25 +30,6 @@ Sensor sen_front_right;
 //Sensor sen_right;
 //Sensor sen_back;
 
-void can_sensor_tx_task(void) {
-    sensor_can_msg.msg_id = DISTANCE_SENSOR_ID;
-    dist_sensor ds;
-    if(!xQueueReceive(sensor_task, &ds, 1)) {
-            //puts("Failed to receive item within 1 ms\n");
-            return;
-    }
-   else {
-        memcpy(&(sensor_can_msg.data.qword), &ds, sizeof(dist_sensor));
-        if(transmit_data(sensor_can_msg)) {
-
-        }
-        else
-        {
-
-        }
-    }
-}
-
 // This function is for 3 pin ultrasonic sensor and port1
 void read_sensor_data1(Sensor* s1,int port_no,int pin_no){
 
@@ -170,7 +151,6 @@ void send_sensor_data(void) {
         read_sensor_data1(&sen_front_center,1,19);
     }
 
-#if CAN_DBC
     // Send messages:
     SENSOR_TX_SENSOR_SONARS_t sensor_msg;
     sensor_msg.SENSOR_SONARS_front_center = sen_front_center.szone;
@@ -184,25 +164,6 @@ void send_sensor_data(void) {
     sensor_can_msg.msg_id = sensor_msg_header.mid;
     sensor_can_msg.frame_fields.data_len = sensor_msg_header.dlc;
 
-#endif
-
-#if !CAN_DBC
-    dist_sensor sensor_data;
-    sensor_data.front_center=sen_front_center.szone;
-    sensor_data.front_left=sen_front_left.szone;
-    sensor_data.front_right=sen_front_right.szone;
-    sensor_data.left=no_obstacle;//sen_left.szone;
-    sensor_data.right=no_obstacle;//sen_right.szone;
-    sensor_data.back=no_obstacle;//sen_back.szone;
-
-    //if(!xQueueSend(sensor_task, &sensor_data, 1)){
-    //
-    //}
-
-    sensor_can_msg.msg_id = DISTANCE_SENSOR_ID;
-
-    memcpy(&(sensor_can_msg.data.qword), &sensor_data, sizeof(dist_sensor));
-#endif
 
     if(transmit_data(sensor_can_msg)) {
 

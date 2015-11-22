@@ -37,26 +37,10 @@
 #include "tlm/c_tlm_comp.h"
 #include "tlm/c_tlm_var.h"
 
-#define IF_PREET            0
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 extern can_msg_t sensor_can_msg;
-
-#if IF_PREET
-uint8_t calibation_value = 0;
-
-/// Necessary variables for CAN auto generated code
-    /// Actual message the whole program uses
-    SENSOR_TX_SENSOR_SONARS_t sensor_sonars_msg;
-
-    // EXACT NAME: MIA replacement
-    const SENSOR_TX_SENSOR_SONARS_t SONARS__MIA_MSG = { 3, 3, 3, 3, 3, 3};
-
-    // EXACT NAME: Timeout when MIA is replaced
-    const uint32_t SONARS__MIA_MS = 1000;
-///
-#endif
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
@@ -87,7 +71,6 @@ void period_1Hz(void)
 void period_10Hz(void)
 {
     send_sensor_data();
-    //can_sensor_tx_task();
 }
 
 void period_100Hz(void)
@@ -99,35 +82,3 @@ void period_1000Hz(void)
 {
 
 }
-
-#if IF_PREET
-void preet_can_receive_function() {
-    // Whichever way you receive a message:
-    can_msg_t msg;
-    CAN_rx(can1, &msg, 1000);
-
-    switch (msg.msg_id) {
-        case (DISTANCE_SENSOR_ID):
-        {
-            msg_hdr_t hdr = { msg.msg_id, (uint8_t)msg.frame_fields.data_len };
-            SENSOR_TX_SENSOR_SONARS_decode(&sensor_sonars_msg,(uint64_t*)&msg.data,&hdr); // NULL
-            break;
-        }
-    }
-
-    // HANDLE MIAs:
-    if (SENSOR_TX_SENSOR_SONARS_handle_mia(&sensor_sonars_msg, 10)) {
-        // Message has gone missing
-    }
-
-    // Send messages:
-    MOTORIO_TX_MOTORIO_DIRECTION_t mc;
-    mc.MOTORIO_DIRECTION_speed_cmd = normal;
-    mc.MOTORIO_DIRECTION_turn_cmd = straight;
-    msg_hdr_t h = MOTORIO_TX_MOTORIO_DIRECTION_encode((uint64_t*)&msg.data, &mc);
-    msg.msg_id = h.mid;
-    msg.frame_fields.data_len = h.dlc;
-    CAN_tx(can1, &msg, 0);
-
-}
-#endif
