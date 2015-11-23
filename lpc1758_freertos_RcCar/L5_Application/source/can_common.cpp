@@ -5,10 +5,11 @@
  */
 
 #include "can_common.hpp"
-
+#include "_can_dbc/generated_motorio_code.h"
 can_msg_t no_motor_msg,tmp_can_msg,received_msg;
-extern can_msg_t motor_msg;
+//extern can_msg_t motor_msg;
 int no_motor_msg_count=0;
+DRIVER_TX_MOTORIO_DIRECTION_t motor_msg;
 
 static bool bus_off_state = false;
 static bool powerup_sync_motor_io_controller( void );
@@ -57,7 +58,7 @@ bool can_init(void) {
     CAN_reset_bus(MOTORIO_CNTL_CANBUS);
 
     // Sync with the master controller by sending power_up_sync
-    status = powerup_sync_motor_io_controller();
+    status = true;//powerup_sync_motor_io_controller();
     return status;
 }
 
@@ -95,14 +96,17 @@ bool receive_data(){
     if(false == CAN_rx(MOTORIO_CNTL_CANBUS, &received_msg, 0)) {
         //SET_ERROR(ERROR_TX_FAILED);
         //LOG_ERROR("CAN_rx failed\n");
-        motor_msg = no_motor_msg;
+       // motor_msg = no_motor_msg;
         no_motor_msg_count++;
         return false;
     }
     else {
         no_motor_msg_count = 0;
         if (received_msg.msg_id == MOTOR_DIRECTIONS_ID) {
-            motor_msg = received_msg;
+            msg_hdr_t hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
+            DRIVER_TX_MOTORIO_DIRECTION_decode(&motor_msg,
+                                    (uint64_t*)&received_msg.data,
+                                    &hdr); // NULL
         }
         else if (received_msg.msg_id == RESET_ID) {
             motor_io_get_master_reset();

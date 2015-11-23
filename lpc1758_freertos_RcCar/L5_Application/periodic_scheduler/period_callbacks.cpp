@@ -28,11 +28,14 @@
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
 
+
 #include <stdint.h>
 #include "periodic_callback.h"
-#include "c_tlm_var.h"
 #include "motor_controller.hpp"
 #include "can_common.hpp"
+// Include file for telemetry --> ALso need to turn on #define at sys_config.h (SYS_CFG_ENABLE_TLM)
+#include "tlm/c_tlm_comp.h"
+#include "tlm/c_tlm_var.h"
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -48,8 +51,8 @@ bool period_init(void)
     }
     while(!status);                 // If CAN bus is not ready then no need to go further
 
-    motor_init();           // Initialize PWM sequence for DC and Servo motor
-    return true; // Must return true upon success
+    motor_init();                   // Initialize PWM sequence for DC and Servo motor
+    return true;                    // Must return true upon success
 }
 
 /// Register any telemetry variables
@@ -61,7 +64,6 @@ bool period_reg_tlm(void)
     return true; // Must return true upon success
 }
 
-
 void period_1Hz(void)
 {
     check_bus_off();            // To check if CAN bus off is there then RESET the CAN bus
@@ -69,15 +71,15 @@ void period_1Hz(void)
 
 void period_10Hz(void)
 {
-    drive_TopGun();             // Receive CAN data from Master and set PWM accordingly
+    drive_TopGun();             // set PWM of motors
 }
 
 void period_100Hz(void)
 {
-
+    receive_data();             // Receive CAN data from Master
 }
 
 void period_1000Hz(void)
 {
-
+    check_rpm();                // Check RPM sensor if it gets white line
 }
