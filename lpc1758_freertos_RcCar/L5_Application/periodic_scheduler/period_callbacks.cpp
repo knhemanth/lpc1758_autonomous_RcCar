@@ -48,7 +48,7 @@ void period_1Hz(void)
     if(bus_off == true)
     {
         bus_reset();
-        LE.on(1);
+        LE.off(PING_CAN_BO);
         bus_off = false;
     }
 

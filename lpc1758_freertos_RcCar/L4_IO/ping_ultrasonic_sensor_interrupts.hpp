@@ -62,11 +62,12 @@
 
 #define MAX_SENSOR_COUNT              (3)   //PING SENSOR
 
-#define PING_CAN                      (can2) //Ping to can2
+#define PING_CAN                      (can1) //Ping to can2
 #define PING_BAUD                     (100)  //baud rate
 #define PING_TIMEOUT                  (0)    //timeout
 #define PING_HEARTBEAT_ERROR_LED      (4)    //LED4 for heartbeat error
 #define PING_ZONE_SENDING_ERROR_LED   (3)    //LED3 for zone sending error
+#define PING_CAN_BO                (1)    //LED1 for can bus off
 
 #define RIGHT_LED ( 3 )
 #define FRONT_LED ( 2 )

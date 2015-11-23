@@ -402,7 +402,7 @@ void  interrupt_based_ping_sensor()
     //////////////////////////////////end of left sensor
 #endif
 
-#if 1 // ZONE_INFO
+#if 0 // ZONE_INFO
       //printf("[%c][%c][%c]\n", zoneMessage[left_obstacle_zone],zoneMessage[front_obstacle_zone], zoneMessage[right_obstacle_zone]);
 
       if(right_obstacle_zone == N)
@@ -460,11 +460,11 @@ void  interrupt_based_ping_sensor()
       if(!status)
       {
           LOG_ERROR("Sending Distance values -- FAILED ");
-          LE.on( PING_ZONE_SENDING_ERROR_LED );    //LE.on(4);
+   //       LE.on( PING_ZONE_SENDING_ERROR_LED );    //LE.on(3);
       }
       else
       {
-          LE.off(  PING_ZONE_SENDING_ERROR_LED  );
+          LE.toggle(  PING_ZONE_SENDING_ERROR_LED  );
       }
 
 #else
@@ -544,6 +544,8 @@ void ping_powerupsync(void)
 
         delay_ms(500);
 
+
+
     }while (sync_ack == false);
 }
 
@@ -551,6 +553,7 @@ extern bool bus_off;
 void test_bus_off_cb(uint32_t d)
 {
    bus_off = true;
+   LE.on(PING_CAN_BO);
 }
 
 void data_ovr_cb(uint32_t d)

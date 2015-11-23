@@ -34,7 +34,7 @@
 void sensor_controller_init()
 {
     CAN_init(PING_CAN, PING_BAUD, 8, 8, test_bus_off_cb, data_ovr_cb);
-
+    LE.on(2);
 }
 
 
