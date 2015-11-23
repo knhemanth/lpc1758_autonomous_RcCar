@@ -33,9 +33,9 @@
 #include <cstring>   //for memcpy
 
 
-#define HEARTBEAT ( 0 )    //1Hz periodic
+#define HEARTBEAT ( 1 )    //1Hz periodic
 #define ZONE_INFO ( 1 )
-#define SENSOR_SEND_ON_CAN ( 0 )
+#define SENSOR_SEND_ON_CAN ( 1 )
 
 #define SINGLE_SENSOR ( 0 )
 
@@ -65,7 +65,8 @@
 #define PING_CAN                      (can2) //Ping to can2
 #define PING_BAUD                     (100)  //baud rate
 #define PING_TIMEOUT                  (0)    //timeout
-#define PING_HEARTBEAT_ERROR_LED      (4)    //LED1 for heartbeat error
+#define PING_HEARTBEAT_ERROR_LED      (4)    //LED4 for heartbeat error
+#define PING_ZONE_SENDING_ERROR_LED   (3)    //LED3 for zone sending error
 
 #define RIGHT_LED ( 3 )
 #define FRONT_LED ( 2 )
