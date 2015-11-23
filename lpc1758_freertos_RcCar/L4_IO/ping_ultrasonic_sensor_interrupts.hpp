@@ -5,8 +5,9 @@
  *      Author: Hemanth K N and Akshay Vijaykumar
  */
 
-#ifndef L4_IO_3ULTRASONIC_SENSOR_INTERRUPTS_HPP_
-#define L4_IO_3ULTRASONIC_SENSOR_INTERRUPTS_HPP_
+
+#ifndef L4_IO_PING_ULTRASONIC_SENSOR_INTERRUPTS_HPP_
+#define L4_IO_PING_ULTRASONIC_SENSOR_INTERRUPTS_HPP_
 
 /* MODULE USAGE :
  * In the 10hz periodic task, Call US_FRONT.ReadRange();
@@ -76,19 +77,14 @@
 
 
 // This enumeration matches the distance of the obstacle for PING SENSOR
-typedef enum {
-    P = 0, //pass--no_obstacle:)
-    F,  // Far
-    M,  // Middle
-    N  // Near
-} distance_obstacle;
+
 
 //char zoneMessage[4][10] = {"N", "M", "F", "P"};
 
 //This enumeration matches the threshold of the obstacle for PING SENSOR
 #define TEST_INPUTS 1
 
-#if TEST_INPUTS
+#if 0// TEST_INPUTS
 
 typedef enum{
     threshold_zero    = 0 ,
@@ -98,7 +94,7 @@ typedef enum{
     threshold_far      = 300,
 } obs_thre;
 
-#else
+//#else
 
 typedef enum{
     threshold_zero    = 0 ,

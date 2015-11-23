@@ -28,13 +28,21 @@
 #include "can.h"
 #include "stdio.h"
 #include "ping_ultrasonic_sensor_interrupts.hpp"
+#include "utilities.h"
 
 
 
 void sensor_controller_init()
 {
-    CAN_init(PING_CAN, PING_BAUD, 8, 8, test_bus_off_cb, data_ovr_cb);
-    LE.on(2);
+    can_msg_t sensor_msg;
+
+    CAN_init(PING_CAN, PING_BAUD, 50, 50, test_bus_off_cb, data_ovr_cb);
+
+    CAN_reset_bus(PING_CAN);
+
+   // LE.on(2);
+
+    // Do Powerup-Sync Ack Here
 }
 
 
@@ -64,11 +72,13 @@ int main(void)
      * such that it can save remote control codes to non-volatile memory.  IR remote
      * control codes can be learned by typing the "learn" terminal command.
      */
+    sensor_controller_init();
+
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
-    sensor_controller_init();
+
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
     #if 1

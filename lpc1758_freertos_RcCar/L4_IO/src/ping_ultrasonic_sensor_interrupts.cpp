@@ -12,6 +12,21 @@
 #include "eint.h"   //for EINT3XXXXXX used in PING
 #include "io.hpp"
 
+typedef enum{
+    threshold_zero    = 0 ,
+    threshold_nearest = 60,
+    threshold_near    = 120,
+    threshold_middle  = 190,
+    threshold_far      = 300,
+} obs_thre;
+
+typedef enum {
+    P = 0, //pass--no_obstacle:)
+    F,  // Far
+    M,  // Middle
+    N  // Near
+} distance_obstacle;
+
 //Divya editing master module for ultrasonic sensor
 //Creating a class instance of all the ultrasonic modules
 
@@ -285,7 +300,7 @@ void  interrupt_based_ping_sensor()
     static int right_obstacle_zone = 0;
     static int left_obstacle_zone = 0;
 
-     obs_thre threshold;
+ //    obs_thre threshold;
 #endif
 
       //****************************SENSOR******************************//
@@ -359,8 +374,7 @@ void  interrupt_based_ping_sensor()
 
 #if !SINGLE_SENSOR
 
- //     if(right_ultrasonic.recieve_from_queue())
- //     {
+
           if((Ultra_Sonic_4ping :: index - 1) == 1)
           {
                  right_ultrasonic.recieve_from_queue();
@@ -369,7 +383,7 @@ void  interrupt_based_ping_sensor()
 
                  latest_valuer = right_ultrasonic.ping_get_from_filter();
           }
-  //    }
+
 
 #if ZONE_INFO
      right_obstacle_zone = right_ultrasonic.get_zone(latest_valuer);
@@ -382,8 +396,7 @@ void  interrupt_based_ping_sensor()
     //start of left sensor
 
 #if !SINGLE_SENSOR
- //     if(left_ultrasonic.recieve_from_queue())
-  //    {
+
           if((Ultra_Sonic_4ping :: index - 1) == -1)
           {
               left_ultrasonic.recieve_from_queue();
@@ -392,7 +405,7 @@ void  interrupt_based_ping_sensor()
 
               latest_valuel = left_ultrasonic.ping_get_from_filter();
           }
- //     }
+
 
 #if ZONE_INFO
       left_obstacle_zone = left_ultrasonic.get_zone(latest_valuel);
@@ -449,8 +462,9 @@ void  interrupt_based_ping_sensor()
       all_sensor.front_left   = (uint8_t) left_obstacle_zone;
       all_sensor.front_right  = (uint8_t) right_obstacle_zone;
 
-      sensor_msg.msg_id = DISTANCE_SENSOR_ID;
-      sensor_msg.frame_fields.is_29bit = 0;      //11-bit
+     sensor_msg.msg_id = DISTANCE_SENSOR_ID;
+
+      sensor_msg.frame_fields.is_29bit = false;      //11-bit
       sensor_msg.frame_fields.data_len = sizeof(dist_sensor);
 
       memcpy(&sensor_msg.data.qword, &all_sensor, sizeof(dist_sensor));
@@ -510,7 +524,7 @@ void ping_heartbeat(void)
         sensor_heart_msg.frame_fields.data_len = 0;
 
         //can2,sensor_heartbeat_id,0 timout
-        status = CAN_tx(PING_CAN,&sensor_heart_msg,PING_TIMEOUT);
+        status = CAN_tx(PING_CAN, &sensor_heart_msg, PING_TIMEOUT);
 
         if(status == false)
         {
@@ -532,7 +546,6 @@ void ping_powerupsync(void)
     ping_sync_msg.frame_fields.is_29bit = 0;
     ping_sync_msg.frame_fields.data_len = 0;
 
-
     do
     {
         status = CAN_tx(PING_CAN,&ping_sync_msg,PING_TIMEOUT);
@@ -544,9 +557,9 @@ void ping_powerupsync(void)
 
         delay_ms(500);
 
-
-
     }while (sync_ack == false);
+
+
 }
 
 extern bool bus_off;
