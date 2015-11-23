@@ -48,6 +48,7 @@ void period_1Hz(void)
     if(bus_off == true)
     {
         bus_reset();
+        LE.on(1);
         bus_off = false;
     }
 
