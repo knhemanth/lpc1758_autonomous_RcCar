@@ -460,11 +460,11 @@ void  interrupt_based_ping_sensor()
       if(!status)
       {
           LOG_ERROR("Sending Distance values -- FAILED ");
-          LE.on( PING_HEARTBEAT_ERROR_LED );
+          LE.on( PING_ZONE_SENDING_ERROR_LED );    //LE.on(4);
       }
       else
       {
-          LE.off(  PING_HEARTBEAT_ERROR_LED  );
+          LE.off(  PING_ZONE_SENDING_ERROR_LED  );
       }
 
 #else
@@ -483,11 +483,11 @@ void  interrupt_based_ping_sensor()
       if(status == false)
       {
           LOG_ERROR("Sending Distance values -- FAILED ");
-          LE.toggle(  PING_HEARTBEAT_ERROR_LED  );
+          LE.toggle(  PING_ZONE_SENDING_ERROR_LED  );
       }
       else
       {
-          LE.off(  PING_HEARTBEAT_ERROR_LED  );
+          LE.off(  PING_ZONE_SENDING_ERROR_LED  );
       }
 
 #endif
@@ -518,7 +518,7 @@ void ping_heartbeat(void)
         }
         else
         {
-            LE.toggle(  PING_HEARTBEAT_ERROR_LED  );
+            LE.toggle(  PING_HEARTBEAT_ERROR_LED  );  //LED 4
         }
 }
 
@@ -555,6 +555,6 @@ void test_bus_off_cb(uint32_t d)
 
 void data_ovr_cb(uint32_t d)
 {
-    CAN_reset_bus( PING_CAN );
+    return;
 }
 
