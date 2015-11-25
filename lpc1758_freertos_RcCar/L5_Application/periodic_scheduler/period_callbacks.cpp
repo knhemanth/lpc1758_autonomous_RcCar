@@ -44,6 +44,7 @@ void period_1Hz(void)
 {
 
 
+    receive_master_checkpoint();
    // geo_send_heartbeat();
    // geo_check_master_reset();
 
@@ -58,23 +59,11 @@ void period_10Hz(void)
      * If you change then call gps getters in both functions
      */
     gps_data();
-    //  geo_send_gps();
-    geo_location current_checkpoint_data;
-    GEO_TO_SEND a;
-    if(receive_master_checkpoint(current_checkpoint_data))
-    {
-        a = GEO_DATA_TO_SEND;
-        geo_send_gps(a);
-        geo_send_heading(a, current_checkpoint_data);
-    }
-    else
-    {
-     a = GEO_DO_NOT_SEND;
-     geo_send_gps(a);
-     geo_send_heading(a,current_checkpoint_data);
-    }
-
+    geo_send_gps();
+    geo_send_heading();
 }
+
+
 
 void period_100Hz(void)
 {
