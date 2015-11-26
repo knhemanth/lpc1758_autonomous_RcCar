@@ -93,6 +93,8 @@ class bt_uart_task : public scheduler_task
            Uart3 &bt_uart = Uart3::getInstance();
            bool uart_stat = false;
 
+//wait for data from android app
+
            uart_stat = bt_uart.gets(bt_str, bt_data_len, portMAX_DELAY );
 
            if(uart_stat)

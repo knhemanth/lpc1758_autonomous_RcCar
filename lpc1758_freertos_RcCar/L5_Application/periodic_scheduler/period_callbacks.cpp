@@ -29,6 +29,7 @@
  */
 
 #include <stdint.h>
+#include "stdio.h"
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "can.h"
@@ -45,6 +46,7 @@ can_msg_t waypt_ack_mssg;
 bool waypt_ack = false;
 bool data_send_flag = false;
 int bt_send_loop = 0;
+extern can_msg_t can_mssg_bt;
 extern chk_point_data *waypt_ptr;
 
 /// This is the stack size used for each of the period tasks
@@ -75,6 +77,7 @@ void period_10Hz(void)
             {
                 waypt_ack = true;
                 data_send_flag = true;
+                bt_send_loop = 0;
             }
         }
     }
@@ -85,6 +88,13 @@ void period_10Hz(void)
             waypt_ptr->latitude = way_pt_array[bt_send_loop];
             waypt_ptr->longitude = way_pt_array[bt_send_loop + 1];
             bt_send_loop += 2;
+            CAN_tx(can_controller, &can_mssg_bt, 0);
+            PRINT("\nway pt data sent");
+        }
+        else
+        {
+            data_send_flag = false;
+            waypt_ack = false;
         }
     }
 }
