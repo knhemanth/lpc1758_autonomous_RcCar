@@ -18,20 +18,20 @@
 #define PMTK_SET_BAUD_57600 "$PMTK251,57600*2C"
 #define PMTK_SET_NMEA_OUTPUT_RMCONLY "$PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29"
 
-geo_location gps_data_dec; // Structure to fill the GPS data(Integer Format)
+geo_location gps_data_dec2; // Structure to fill the GPS data(Integer Format)
 
-uint8_t speed_gps;
+uint8_t speed_gps2;
 
 Uart2 &uart2_ref = Uart2::getInstance();
 
 bool gps_init(void){
 
         uart2_ref.init(9600,100,100);
-        uart2_ref.putline(PMTK_SET_BAUD_9600,1);
-        uart2_ref.putline(PMTK_SET_NMEA_UPDATE_10HZ,1);
+        uart2_ref.putline(PMTK_SET_BAUD_9600,0);
+        uart2_ref.putline(PMTK_SET_NMEA_UPDATE_10HZ,0);
     //  uart2_ref.putline(PMTK_API_SET_FIX_CTL_5HZ,99999999);
    //   uart2_ref.putline(PMTK_SET_BAUD_57600,99999999);
-        uart2_ref.putline(PMTK_SET_NMEA_OUTPUT_RMCONLY,1);
+        uart2_ref.putline(PMTK_SET_NMEA_OUTPUT_RMCONLY,0);
      // uart2_ref.putChar(clear_byte1,9999999);
       //uart2_ref.putChar(clear_byte2,9999999);
         return true;
@@ -50,14 +50,14 @@ bool gps_data(){
     lat_minute =get_lat_minute();
     long_degree =get_long_degree();
     long_minute =get_long_minute();
-    speed_gps = (uint8_t)(1.150779)*get_speed_GPS();
+    speed_gps2 = (uint8_t)(1.150779)*get_speed_GPS();
 
 
      lat_dec = get_decimal(lat_degree, lat_minute);
      long_dec = get_decimal(long_degree, long_minute);
 
-     gps_data_dec.latitude = lat_dec;
-     gps_data_dec.longitude = (-1)*long_dec;
+     gps_data_dec2.latitude = lat_dec;
+     gps_data_dec2.longitude = (-1)*long_dec;
 
 /*
      diff = lat_dec - (int)lat_dec;
@@ -110,18 +110,18 @@ int get_lat_degree(void){
     char a;
         char buffer[10]={'\0'};
         while(a!='C'){
-            uart2_ref.getChar(&a,1);
+            uart2_ref.getChar(&a,0);
         }
         while(a!='A'){
-            uart2_ref.getChar(&a,1);
+            uart2_ref.getChar(&a,0);
          //   if(a == 'V')
           //      return 0;
         }
 
-        uart2_ref.getChar(&a,1);
+        uart2_ref.getChar(&a,0);
         int count=0;
         while(count<2){
-            uart2_ref.getChar(&a,1);
+            uart2_ref.getChar(&a,0);
             buffer[count++]=a;
         }
 
@@ -133,7 +133,7 @@ double get_lat_minute(void){
     char buffer[10]={'\0'};
     int count=0;
     while(count<7){
-        uart2_ref.getChar(&a,1);
+        uart2_ref.getChar(&a,0);
         buffer[count++]=a;
     }
     return atof(buffer);
@@ -144,12 +144,12 @@ int get_long_degree(void){
     char a;
     char buffer[10]={'\0'};
     while(a!='N'){
-        uart2_ref.getChar(&a,1);
+        uart2_ref.getChar(&a,0);
     }
-    uart2_ref.getChar(&a,1);
+    uart2_ref.getChar(&a,0);
     int count=0;
     while(count<3){
-        uart2_ref.getChar(&a,1);
+        uart2_ref.getChar(&a,0);
         buffer[count++]=a;
     }
     return atoi(buffer);
@@ -160,7 +160,7 @@ double get_long_minute(void){
     char buffer[10]={'\0'};
     int count=0;
     while(count<7){
-        uart2_ref.getChar(&a,1);
+        uart2_ref.getChar(&a,0);
         buffer[count++]=a;
     }
     return atof(buffer);
@@ -170,16 +170,13 @@ float get_speed_GPS(void){
     char a;
     char buffer[10] = {'\0'};
     while(a!='W'){
-            uart2_ref.getChar(&a,1);
+            uart2_ref.getChar(&a,0);
         }
-    uart2_ref.getChar(&a,1);
+    uart2_ref.getChar(&a,0);
     int count=0;
         while(count<4){
-            uart2_ref.getChar(&a,1);
+            uart2_ref.getChar(&a,0);
             buffer[count++]=a;
         }
         return atof(buffer);
-
 }
-
-

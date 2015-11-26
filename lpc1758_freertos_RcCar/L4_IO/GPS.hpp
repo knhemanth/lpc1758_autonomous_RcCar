@@ -12,8 +12,8 @@
 #include "uart2.hpp"
 #include "can_msg_id.h"
 
-extern geo_location gps_data_dec;
-extern uint8_t speed_gps;
+extern geo_location gps_data_dec2;
+extern uint8_t speed_gps2;
 extern Uart2 &uart2_ref;
 
 bool gps_init(void);

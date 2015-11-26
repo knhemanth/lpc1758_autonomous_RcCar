@@ -13,7 +13,6 @@
 #include "soft_timer.hpp"
 #include "imu.hpp"
 #include "lpc_sys.h"
-#include "GPS.hpp"
 #include "stdio.h"
 #include "stdlib.h"
 #include <math.h>
@@ -342,7 +341,7 @@ bool receive_master_checkpoint()
 
         can_status = CAN_fullcan_read_msg_copy( geo_gps_msg_ptr, &geo_gps_msg_copy );
                // XXX:
-        if( can_status )
+        if(can_status)
                {
                    // We have a new message. Which is a check point from the master.
                    // X XX: Suggest "shared" structures rather than memcpy
@@ -352,6 +351,10 @@ bool receive_master_checkpoint()
                    current_checkpoint_data.longitude = gps_data_master->longitude;
                    return true;
                }
+        else
+        {
+            return false;
+        }
 }
 
 void geo_check_master_reset( void )

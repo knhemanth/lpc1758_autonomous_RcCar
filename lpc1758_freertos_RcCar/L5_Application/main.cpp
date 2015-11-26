@@ -31,7 +31,8 @@
 #include "soft_timer.hpp"
 #include "stdio.h"
 #include "stdlib.h"
-#include "GPS.hpp"
+//#include "GPS.hpp"
+#include "GPS2.hpp"
 
 
 /**
@@ -51,7 +52,7 @@
 int main(void)
 {
     SoftTimer init_timer(GEO_INIT_LED_TIME);
-    gps_init();  // It will set the initial configuration for the GPS sensor.
+  //  gps_init();  // It will set the initial configuration for the GPS sensor.
 
     /**
      * A few basic tasks for this bare-bone system :
@@ -89,6 +90,7 @@ int main(void)
    // }
 
    scheduler_add_task(new IMUTask(PRIORITY_CRITICAL));
+   scheduler_add_task(new GPSTask(PRIORITY_CRITICAL));
 
     /* Call controller init routine before starting periodic call backs */
     bool status = geo_controller_init();
