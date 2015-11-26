@@ -10,6 +10,7 @@ can_msg_t no_motor_msg,tmp_can_msg,received_msg;
 //extern can_msg_t motor_msg;
 int no_motor_msg_count=0;
 DRIVER_TX_MOTORIO_DIRECTION_t motor_msg;
+GEO_TX_GEO_SPEED_ANGLE_t geo_msg; // anuj's change here
 
 static bool bus_off_state = false;
 static bool powerup_sync_motor_io_controller( void );
@@ -93,6 +94,7 @@ bool transmit_data(can_msg_t transmit_msg){
 // Receive data over CAN
 bool receive_data(){
     // XXX: This should be a while loop to empty the CAN receive queues
+
     if(false == CAN_rx(MOTORIO_CNTL_CANBUS, &received_msg, 0)) {
         //SET_ERROR(ERROR_TX_FAILED);
         //LOG_ERROR("CAN_rx failed\n");
@@ -117,6 +119,18 @@ bool receive_data(){
         else if (received_msg.msg_id == RUN_MODE_ID) {
             // DC motor's base speed is get changed
         }
+        else if (received_msg.msg_id == GEO_SPEED_ANGLE_ID) {
+                    // DC motor's base speed is get changed
+            msg_hdr_t hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
+            GEO_TX_GEO_SPEED_ANGLE_decode(&geo_msg,
+                                                (uint64_t*)&received_msg.data,
+                                                &hdr); // NULL
+        }
+
+   /* geo_msg.GEO_ANGLE_bearing_cmd = 20;
+    geo_msg.GEO_ANGLE_heading_cmd = 20;
+    geo_msg.GEO_SPEED_cmd = 10;
+*/
         return true;
     }
 }

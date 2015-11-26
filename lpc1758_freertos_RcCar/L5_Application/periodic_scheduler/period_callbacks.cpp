@@ -36,6 +36,7 @@
 // Include file for telemetry --> ALso need to turn on #define at sys_config.h (SYS_CFG_ENABLE_TLM)
 #include "tlm/c_tlm_comp.h"
 #include "tlm/c_tlm_var.h"
+#include "lcd_test_new.hpp"
 
 #define HEARTBEAT           0
 /// This is the stack size used for each of the period tasks
@@ -50,13 +51,13 @@ extern int dc_turbo_count;
 bool period_init(void)
 {
     bool status = false;
-
     do {
     status = can_init();             // Initialize CAN bus
     }
     while(!status);                 // If CAN bus is not ready then no need to go further
 
     motor_init();                   // Initialize PWM sequence for DC and Servo motor
+    lcd_init();                     // Initialize UART 3 for LCD
     return true;                    // Must return true upon success
 }
 
@@ -80,6 +81,7 @@ void period_1Hz(void)
     motor_io_send_heartbeat();  // Send Heartbeat to Master controller
 #endif
     check_bus_off();            // To check if CAN bus off is there then RESET the CAN bus
+    lcd_print();                // Print necessary data on different screens
 }
 
 void period_10Hz(void)
@@ -94,5 +96,6 @@ void period_100Hz(void)
 
 void period_1000Hz(void)
 {
+    lcd_receive();              // Receive data from LCD
     check_rpm();                // Check RPM sensor if it gets white line
 }

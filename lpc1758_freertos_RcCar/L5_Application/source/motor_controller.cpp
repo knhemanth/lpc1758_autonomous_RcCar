@@ -105,6 +105,7 @@ void set_motors_pwm(void)
     md.turn = motor_msg.MOTORIO_DIRECTION_turn_cmd;
     md.speed = motor_msg.MOTORIO_DIRECTION_speed_cmd;
 
+
 #if SERVO_ON
     if (md.turn == left)
     { // turn hard left
