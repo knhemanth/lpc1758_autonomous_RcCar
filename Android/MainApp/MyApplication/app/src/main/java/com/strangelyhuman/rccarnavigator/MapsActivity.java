@@ -15,6 +15,8 @@ import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -22,6 +24,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.support.v7.widget.Toolbar;
 
@@ -72,56 +75,36 @@ import javax.xml.transform.Source;
         int connect = 0;
         int start_stop = 0;
         int snd_route_en = 0;
+
+        Handler mHandler;
+        TextView txt;
+
+        final int RECEIVE_MESSAGE = 1;        // Status  for Handler
+
         private BluetoothAdapter btAdapter;
         private BluetoothSocket btSocket;
-        private OutputStream outStream = null;
-        private InputStream instream = null;
+
+        private ConnectedThread mConnectedThread;
 
         // SPP UUID service
         private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-        // MAC-address of Bluetooth module (you must edit this line)
-        private static String address = "20:15:03:03:09:75";
+        //HC-06 module MAC
+        //private static String address = "20:15:03:03:09:75";
+
+        //HC=05 module MAC
+        private static String address = "20:15:08:13:10:18";
 
         private static String tx_data1 = "0 \n";
         private static String tx_data2 = "0 \n";
 
-
+        String disp_temp_str;
 
         public boolean isConnected() {
             ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
             return connectivityManager.getActiveNetworkInfo() != null && connectivityManager.getActiveNetworkInfo().isConnectedOrConnecting();
         }
-
-//    public class makeRouteDialogFragment extends DialogFragment {
-//
-//        @Override
-//        public Dialog onCreateDialog(Bundle savedInstanceState) {
-//            Bundle args = getArguments();
-//            String title = args.getString("Plot a Route");
-//            String message = args.getString("Would you like to plot a route between the two points?");
-//
-//            return new AlertDialog.Builder(getActivity())
-//                    .setTitle(title)
-//                    .setMessage(message)
-//
-//                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-//                        @Override
-//                        public  void onClick(DialogInterface dialog, int which) {
-//                            getTargetFragment().onActivityResult(getTargetRequestCode(), Activity.RESULT_OK, null);
-//                        }
-//                    })
-//
-//                    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-//                        @Override
-//                        public void onClick(DialogInterface dialog, int which) {
-//                            getTargetFragment().onActivityResult(getTargetRequestCode(), Activity.RESULT_CANCELED, null);
-//                        }
-//                    })
-//                    .create();
-//        }
-//    }
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -137,6 +120,7 @@ import javax.xml.transform.Source;
             btConnect = (Button) findViewById(R.id.btConnect);
             btdisconnect = (Button)findViewById(R.id.btdisconnect);
             sndrt = (Button) findViewById(R.id.sndrt);
+            txt = (TextView) findViewById(R.id.txt);
             btAdapter = BluetoothAdapter.getDefaultAdapter();
 
             btOn.setOnClickListener(new View.OnClickListener() {
@@ -149,7 +133,7 @@ import javax.xml.transform.Source;
             btnOn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if(connect == 1 && start_stop == 0) {
-                        sendData(tx_data1);
+                        mConnectedThread.sendData(tx_data1);
                         start_stop = 1;
                         Toast.makeText(getBaseContext(), "Car Start", Toast.LENGTH_SHORT).show();
                     }
@@ -159,7 +143,7 @@ import javax.xml.transform.Source;
             btnOff.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if(connect == 1 && start_stop == 1) {
-                        sendData(tx_data2);
+                        mConnectedThread.sendData(tx_data2);
                         start_stop = 0;
                         Toast.makeText(getBaseContext(), "Car Stop", Toast.LENGTH_SHORT).show();
                     }
@@ -188,12 +172,32 @@ import javax.xml.transform.Source;
                 @Override
                 public void onClick(View v) {
                     if((connect == 1) && (snd_route_en == 1)) {
-                        sendData("" + Count_Ordinates + " " + CarRoute + "\n");
+                        mConnectedThread.sendData("" + Count_Ordinates + " " + CarRoute + "\n");
                         Toast.makeText(getBaseContext(), "Sending Route...", Toast.LENGTH_SHORT).show();
                         Log.d(TAG, CarRoute);
                     }
                 }
             });
+
+            mHandler = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    byte[] writeBuf = (byte[]) msg.obj;
+                    int begin = (int)msg.arg1;
+                    int end = (int)msg.arg2;
+
+                    switch(msg.what) {
+                        case 1:
+                            String writeMessage = new String(writeBuf);
+                            writeMessage = writeMessage.substring(begin, end);
+                            disp_temp_str = writeMessage;
+                            Log.d(TAG, disp_temp_str);
+                            txt.setText("Data from HC-05: " + disp_temp_str);            // update TextView
+                            break;
+                    }
+                }
+            };
+
 
             //check if your phone is connected to the internet
             if (!isConnected()) {
@@ -296,48 +300,13 @@ import javax.xml.transform.Source;
             finish();
         }
 
-        private void sendData(String message) {
-            byte[] msgBuffer = message.getBytes();
-
-            Log.d(TAG, "...Send data: " + message + "...");
-
-            try {
-                outStream.write(msgBuffer);
-                Toast.makeText(getApplicationContext(),"data sent",Toast.LENGTH_LONG).show();
-            } catch (IOException e) {
-                String msg = "In onResume() and an exception occurred during write: " + e.getMessage();
-                if (address.equals("00:00:00:00:00:00"))
-                    msg = msg + ".\n\nUpdate your server address from 00:00:00:00:00:00 to the correct address on line 35 in the java code";
-                msg = msg +  ".\n\nCheck that the SPP UUID: " + MY_UUID.toString() + " exists on server.\n\n";
-
-                errorExit("Fatal Error", msg);
-            }
-        }
 
         private void disconnect() {
-            try{
-                instream = btSocket.getInputStream();
-            }catch (IOException e){
-                errorExit("Fatal Error", "In onResume() and input stream creation failed:" + e.getMessage() + ".");
-            }
-
-            if (instream != null) {
-                try {instream.close();} catch (Exception e) {}
-                instream = null;
-            }
-
-            if (outStream != null) {
-                try {outStream.close();} catch (Exception e) {}
-                outStream = null;
-            }
-
-            if (btSocket != null) {
-                try {btSocket.close();
-                    Toast.makeText(getApplicationContext(), "Disconnected", Toast.LENGTH_SHORT).show();
-                    connect = 0;
-                } catch (Exception e) {}
-                btSocket = null;
-            }
+            try {
+                btSocket.close();
+                connect = 0;
+                Toast.makeText(getApplicationContext(), "Disconnected", Toast.LENGTH_SHORT).show();
+            } catch (IOException e) { }
 
         }
 
@@ -378,12 +347,8 @@ import javax.xml.transform.Source;
             // Create a data stream so we can talk to server.
             Log.d(TAG, "...Create Socket...");
 
-            try {
-                outStream = btSocket.getOutputStream();
-            } catch (IOException e) {
-                errorExit("Fatal Error", "In onResume() and output stream creation failed:" + e.getMessage() + ".");
-
-            }
+            mConnectedThread = new ConnectedThread(btSocket);
+            mConnectedThread.start();
         }
 
         public void onActivityResult(int req_code, int res_code, Intent data)
@@ -401,6 +366,69 @@ import javax.xml.transform.Source;
                 }
             }
         }
+
+        private class ConnectedThread extends Thread {
+            private final InputStream mmInStream;
+            private final OutputStream mmOutStream;
+
+            public ConnectedThread(BluetoothSocket socket) {
+                InputStream tmpIn = null;
+                OutputStream tmpOut = null;
+
+                // Get the input and output streams, using temp objects because
+                // member streams are final
+                try {
+                    tmpIn = socket.getInputStream();
+                    tmpOut = socket.getOutputStream();
+                } catch (IOException e) { }
+
+                mmInStream = tmpIn;
+                mmOutStream = tmpOut;
+            }
+
+            public void run() {
+                byte[] buffer = new byte[1024];
+                int begin = 0;
+                int bytes = 0;
+                while (true) {
+                    try {
+                        bytes += mmInStream.read(buffer, bytes, buffer.length - bytes);
+                        for(int i = begin; i < bytes; i++) {
+                            if(buffer[i] == "\n\r".getBytes()[0]) {
+                                mHandler.obtainMessage(1, begin, i, buffer).sendToTarget();
+                                begin = i + 1;
+                                if(i == bytes - 1) {
+                                    bytes = 0;
+                                    begin = 0;
+                                }
+                            }
+                        }
+                    } catch (IOException e) {
+                        break;
+                    }
+                }
+            }
+
+            private void sendData(String message) {
+                byte[] msgBuffer = message.getBytes();
+
+                Log.d(TAG, "...Send data: " + message + "...");
+
+                try {
+                    mmOutStream.write(msgBuffer);
+                    Toast.makeText(getApplicationContext(),"data sent",Toast.LENGTH_LONG).show();
+                } catch (IOException e) {
+                    String msg = "In onResume() and an exception occurred during write: " + e.getMessage();
+                    if (address.equals("00:00:00:00:00:00"))
+                        msg = msg + ".\n\nUpdate your server address from 00:00:00:00:00:00 to the correct address on line 35 in the java code";
+                    msg = msg +  ".\n\nCheck that the SPP UUID: " + MY_UUID.toString() + " exists on server.\n\n";
+
+                    errorExit("Fatal Error", msg);
+                }
+            }
+
+        }
+
 
         private String getDirectionsUrl(LatLng origin, LatLng destination) {
             //Origin of the route
