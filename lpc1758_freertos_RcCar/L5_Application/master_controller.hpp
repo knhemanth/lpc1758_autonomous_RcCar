@@ -9,6 +9,7 @@
 #define L5_APPLICATION_MASTER_CONTROLLER_HPP_
 
 #include "can.h"
+#include "math.h"
 
 #define MASTER_LED_INIT_TIME    (500)
 #define MASTER_CNTL_CANBUS      (can1)
@@ -51,6 +52,12 @@
 #define ZONE_MID_THRESHOLD ( 150 )
 #define ZONE_FAR_THRESHOLD ( 200 )
 
+#define EARTH_RADIUS_KM 6373
+#define degreesToRadians(angleDegrees) (angleDegrees * M_PI / 180.0)
+
+#define GEO_LOC_MIA_MAX_COUNT   100
+#define MIN_DISTANCE_TO_CHKPT   3
+
 enum MASTER_ACK {
     NACK = 0,
     ACK
@@ -58,6 +65,7 @@ enum MASTER_ACK {
 
 enum NAV_STAT{
     STOPPED=0,
+    PAUSED,
     RX_CHKPTS,
     RX_COMPLETE,
     NAVIGATING,

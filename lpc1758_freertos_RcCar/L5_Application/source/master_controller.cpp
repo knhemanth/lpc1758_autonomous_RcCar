@@ -45,6 +45,7 @@ static float long_array[MAX_LONGS] = {0.0};
 static bool power_up_sync_and_ack( void );
 static void bus_off_cb( uint32_t ICR_data );
 static void data_ovr_cb( uint32_t ICR_data );
+static uint64_t calculateDistance(geo_loc *geo_location_ref);
 
 static bool bus_off_status = false;
 
@@ -825,7 +826,7 @@ bool navigation_mode(void)
          * 3. If status is NAVIGATING - Do nothing
          */
 
-        if( nav_status == NAVIGATING )
+        if( nav_status == NAVIGATING || nav_status == PAUSED )
             return NAV_TRUE;
 
         else if( nav_status == RX_COMPLETE )
@@ -869,7 +870,7 @@ bool navigation_mode(void)
             long_array[nav_index] = chkpt->longitude;
             nav_index++;
 
-            if( nav_index == (total_chk_pts - 1) )
+            if( nav_index == total_chk_pts )
             {
                 // We have all the check points
                 nav_status = RX_COMPLETE;
@@ -882,21 +883,118 @@ bool navigation_mode(void)
 
 void navigate_to_next_chkpt( void )
 {
+    can_fullcan_msg_t* can_msg_geoloc_ptr = NULL;
+    static can_fullcan_msg_t can_msg_geoloc_data;
+    static geo_spd_angle heading_msg;
+    geo_loc *location_msg = NULL;
+    bool status = false;
+    static uint8_t mia_count = 0;
+
     // Right now print the check-points one at a time
     if( nav_index == total_chk_pts )
     {
         // We have reached the destination
         nav_status = STOPPED;
         nav_index = 0;
-
-        return;
     }
 
-    printf("Current Checkpoint: LAT %f, LONG %f\n", lat_array[nav_index], long_array[nav_index]);
+    else
+    {
 
-    // Check if checkpoint is reached
+        printf("Current Checkpoint: LAT %f, LONG %f\n", lat_array[nav_index], long_array[nav_index]);
 
-    // if reached, increment nav_index and issue next check-point
-    nav_index++;
+        // Check if checkpoint is reached
+        // Get the GPS data from GEO controller
+        can_msg_geoloc_ptr = CAN_fullcan_get_entry_ptr(can_id_loc_data);
+        status = CAN_fullcan_read_msg_copy(can_msg_geoloc_ptr, &can_msg_geoloc_data);
 
+        if( !status )
+        {
+            // We couldn't receive location update. Check MIA count
+            mia_count++;
+
+            if( mia_count > GEO_LOC_MIA_MAX_COUNT )
+            {
+                // Stop navigation - Tell the motor driver to stop
+                nav_status = PAUSED;
+            }
+
+        }
+
+        else
+        {
+            nav_status = NAVIGATING;
+            mia_count = 0;
+
+            // Get the current GPS co-ordinates
+            location_msg = (geo_loc *)&(can_msg_geoloc_data.data.qword);
+            uint64_t dist_meters = calculateDistance(location_msg);
+
+            if( dist_meters <= MIN_DISTANCE_TO_CHKPT )
+            {
+                // Increment index and issue next check-point
+                nav_index++;
+
+                // If the last check-point has been reached simply increment index and return
+                if( nav_index < total_chk_pts )
+                {
+                    geo_loc next_loc;
+                    can_msg_t can_loc_update_msg;
+
+                    next_loc.latitude = lat_array[nav_index];
+                    next_loc.longitude = long_array[nav_index];
+
+                    can_loc_update_msg.msg_id = GEO_LOC_UPDATE_ID;
+                    can_loc_update_msg.frame_fields.is_29bit = false;
+                    can_loc_update_msg.frame_fields.data_len = sizeof(geo_loc);
+                    memcpy(&can_loc_update_msg.data.qword, &next_loc, sizeof(next_loc));
+
+                    CAN_tx(MASTER_CNTL_CANBUS, &can_loc_update_msg, MASTER_CNTL_CAN_DELAY);
+                }
+            }
+        }
+    }
+
+    // Based on the current status of navigation perform a suitable operation
+    switch( nav_status )
+    {
+        case STOPPED:
+        case PAUSED:
+
+            // Don't issue any motor commands, the car needs to stay stopped in both these cases
+            break;
+
+        case NAVIGATING:
+
+            // Navigation algorithm needs to come here
+            LD.setNumber(nav_index + 1);    // Display which check point we are headed towards
+
+            break;
+
+        default:
+
+            // No other case should come in here, stop immediately
+            nav_status = STOPPED;
+
+            break;
+    }
+
+}
+
+uint64_t calculateDistance(geo_loc *geo_location_ref)
+{
+    float endLat = degreesToRadians(lat_array[nav_index]);
+    float endLong = degreesToRadians(long_array[nav_index]);
+    float startLat = degreesToRadians(geo_location_ref->latitude);
+    float startLong = degreesToRadians(geo_location_ref->longitude);
+
+    float dLong = endLong - startLong;
+    float dLat = endLat - startLat;
+
+    float b = ((sin(dLat/2))*(sin(dLat/2))) + (cos(startLat) * cos(endLat) * (sin(dLong/2))*sin(dLong/2));
+    float c = 2 * atan2(sqrt(b), sqrt(1-b));
+
+    uint64_t d = EARTH_RADIUS_KM * c * 1000 * 10000;
+
+    return d;
 }
