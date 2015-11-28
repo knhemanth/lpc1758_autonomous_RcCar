@@ -22,8 +22,8 @@
 
 
 
-/// Static variable of this class
 unsigned int PWM::msTcMax = 0;
+/// Static variable of this class
 
 PWM::PWM(pwmType pwm, unsigned int frequencyHz) :
     mPwm(pwm)
