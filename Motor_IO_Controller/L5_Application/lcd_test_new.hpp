@@ -18,10 +18,9 @@
  */
 typedef enum{
     home,
-    Magnetometer,
-    GPS,
+    Geo,
+    Sensors,
     Motor,
-    Sensors
 
 }lcd_screen_t;
 

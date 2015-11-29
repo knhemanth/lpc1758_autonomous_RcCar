@@ -13,8 +13,12 @@
 #include "utilities.h"
 #include "_can_dbc/generated_motorio_code.h"
 
-bool flag_mag = false;
-bool flag_mag_page = false;
+bool flag_geo = false;
+bool flag_geo_page = false;
+bool flag_sensors = false;
+bool flag_sensors_page = false;
+bool flag_motor = false;
+bool flag_motor_page = false;
 bool flag_home = false;
 bool flag_home_page = false;
 char lcd_char;
@@ -22,62 +26,32 @@ char lcd_char;
 lcd_screen_t lcdscreen = home;      // Enum variable for current screen on LCD
 extern GEO_TX_GEO_SPEED_ANGLE_t geo_msg;
 extern DRIVER_TX_MOTORIO_DIRECTION_t motor_msg;
+extern SENSOR_TX_SENSOR_SONARS_t sensor_msg;
+extern GEO_TX_GEO_LOC_DATA_t geo_loc_msg;
+extern SENSOR_TX_SENSOR_LIGHT_BAT_t sensor_bat_msg;
 
 char Bytes6[6]={0};                 // 6 bytes received from the LCD
 char ack=0;                         // Acknowledge byte from LCD
 
 
-
 void flag_change(bool* flagp){
-    flag_mag = false;
+    flag_geo = false;
     flag_home = false;
+    flag_sensors = false;
+    flag_motor = false;
     *flagp = true;
 }
 
 void flag_page_change(bool* flagp){
-    flag_mag_page = false;
+    flag_geo_page = false;
     flag_home_page = false;
+    flag_sensors_page = false;
+    flag_motor_page = false;
     *flagp = true;
 }
 
 void lcd_init(void) {
     U3.init(9600,100,100);
-}
-
-void lcd_print(){
-
-     if(Bytes6[1]==0x06 && Bytes6[2]==0x00) {
-         lcdscreen=Magnetometer;
-         //flag_mag = true;
-         //flag_home = false;
-         flag_change(&flag_mag);
-     }
-     if(Bytes6[1]==0x1e && Bytes6[2]==0x02) {
-         lcdscreen=home;
-         //flag_mag = false;
-         //flag_home = true;
-         flag_change(&flag_home);
-     }
-
-     if(flag_mag && !flag_mag_page) {
-         put_comm(0x01,0x0a,0x02,0x00,0x00); // switch to form2
-         //flag_mag_page = true;
-         //flag_home_page = false;
-         flag_page_change(&flag_mag_page);
-     }
-     else if(flag_home && !flag_home_page) {
-         put_comm(0x01,0x0a,0x00,0x00,0x00);// switch to form0
-         //flag_home_page = true;
-         //flag_mag_page = false;
-         flag_page_change(&flag_home_page);
-     }
-
-     if(flag_mag){
-         static char string[30]={0};
-         sprintf(string," %x     %x ", motor_msg.MOTORIO_DIRECTION_speed_cmd , motor_msg.MOTORIO_DIRECTION_turn_cmd);
-         put_string(string,(uint8_t)strlen(string));
-     }
-
 }
 
 void put_comm(char a,char b,char c, char d,char e) {
@@ -92,10 +66,10 @@ void put_comm(char a,char b,char c, char d,char e) {
     U3.getChar(&ack,10);
 }
 
-void put_string(char array[], uint8_t num){
-    uint8_t checksum=0x02^0x00^num;
+void put_string(char array[], uint8_t object_no, uint8_t num){
+    uint8_t checksum=0x02^object_no^num;
     U3.putChar(0x02,10);
-    U3.putChar(0x00,10);
+    U3.putChar(object_no,10);
     U3.putChar(num,10);
 
     for(int i=0;i<num;i++){
@@ -106,6 +80,84 @@ void put_string(char array[], uint8_t num){
     U3.putChar(checksum,10);
     U3.getChar(&ack,10);
 }
+
+
+void lcd_print(){
+
+     static uint8_t headlights = 0;
+     if(Bytes6[1]==0x06 && Bytes6[2]==0x00) {
+         lcdscreen=Geo;
+         flag_change(&flag_geo);
+     }
+     else if(Bytes6[1]==0x06 && Bytes6[2]==0x01) {
+         lcdscreen=Sensors;
+         flag_change(&flag_sensors);
+     }
+     else if(Bytes6[1]==0x06 && Bytes6[2]==0x03) {
+          lcdscreen=Motor;
+          flag_change(&flag_motor);
+     }
+     else if(Bytes6[1]==0x1e && (Bytes6[2]==0x02 || Bytes6[2]==0x04 || Bytes6[2]==0x01)) {
+          lcdscreen=home;
+          flag_change(&flag_home);
+     }
+     else if(Bytes6[1]==0x21 && Bytes6[2]==0x00){
+         headlights++;
+         if(headlights>1)
+             headlights = 0;
+     }
+
+     if(flag_geo && !flag_geo_page) {
+         put_comm(0x01,0x0a,0x02,0x00,0x00); // switch to form2
+         flag_page_change(&flag_geo_page);
+     }
+     else if(flag_sensors && !flag_sensors_page) {
+         put_comm(0x01,0x0a,0x03,0x00,0x00);// switch to form3
+         flag_page_change(&flag_sensors_page);
+     }
+     else if(flag_motor && !flag_motor_page) {
+          put_comm(0x01,0x0a,0x04,0x00,0x00);// switch to form4
+          flag_page_change(&flag_motor_page);
+      }
+     else if(flag_home && !flag_home_page) {
+          put_comm(0x01,0x0a,0x00,0x00,0x00);// switch to form0
+          flag_page_change(&flag_home_page);
+      }
+
+     if(flag_geo){
+         put_comm(0x01, 0x07, 0x01, 0x00, geo_msg.GEO_ANGLE_heading_cmd);
+         static char string[30]={0};
+         sprintf(string," %x", geo_loc_msg.GEO_LOC_LAT_cmd);
+         put_string(string, 0,(uint8_t)strlen(string));
+         sprintf(string," %x", geo_loc_msg.GEO_LOC_LONG_cmd);
+         put_string(string, 1,(uint8_t)strlen(string));
+     }
+     else if(flag_sensors){
+         put_comm(0x01, 0x0b, 0x00, 0x00, sensor_msg.SENSOR_SONARS_front_center);
+         put_comm(0x01, 0x0b, 0x02, 0x00, sensor_msg.SENSOR_SONARS_front_left);
+         put_comm(0x01, 0x0b, 0x01, 0x00, sensor_msg.SENSOR_SONARS_front_right);
+         put_comm(0x01, 0x0b, 0x04, 0x00, sensor_msg.SENSOR_SONARS_left);
+         put_comm(0x01, 0x0b, 0x03, 0x00, sensor_msg.SENSOR_SONARS_right);
+         put_comm(0x01, 0x0b, 0x05, 0x00, sensor_msg.SENSOR_SONARS_back);
+     }
+     else if(lcdscreen == home){
+         put_comm(0x01, 0x1a, 0x00, 0x00, sensor_bat_msg.SENSOR_BAT_cmd); // setting the battery meter here
+         if(headlights)
+             put_comm(0x01, 0x13, 0x00, 0x00, 0x01);
+         else
+             put_comm(0x01, 0x13, 0x00, 0x00, 0x00);
+     }
+     else if(flag_motor){
+         put_comm(0x01, 0x0b, 0x06, 0x00, motor_msg.MOTORIO_DIRECTION_speed_cmd);
+         put_comm(0x01, 0x10, 0x00, 0x00, motor_msg.MOTORIO_DIRECTION_turn_cmd);
+         if(motor_msg.MOTORIO_DIRECTION_turn_cmd==5)
+             put_comm(0x01, 0x0b, 0x07, 0x00, motor_msg.MOTORIO_DIRECTION_turn_cmd);
+         else
+             put_comm(0x01, 0x10, 0x00, 0x00, 0);
+     }
+
+}
+
 
 
 void lcd_receive(){

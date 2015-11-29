@@ -11,6 +11,9 @@ can_msg_t no_motor_msg,tmp_can_msg,received_msg;
 int no_motor_msg_count=0;
 DRIVER_TX_MOTORIO_DIRECTION_t motor_msg;
 GEO_TX_GEO_SPEED_ANGLE_t geo_msg; // anuj's change here
+SENSOR_TX_SENSOR_SONARS_t sensor_msg; // anuj's change here
+SENSOR_TX_SENSOR_LIGHT_BAT_t sensor_bat_msg; // anuj's change here
+GEO_TX_GEO_LOC_DATA_t geo_loc_msg;
 
 static bool bus_off_state = false;
 static bool powerup_sync_motor_io_controller( void );
@@ -120,17 +123,31 @@ bool receive_data(){
             // DC motor's base speed is get changed
         }
         else if (received_msg.msg_id == GEO_SPEED_ANGLE_ID) {
-                    // DC motor's base speed is get changed
             msg_hdr_t hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
             GEO_TX_GEO_SPEED_ANGLE_decode(&geo_msg,
-                                                (uint64_t*)&received_msg.data,
-                                                &hdr); // NULL
+                                    (uint64_t*)&received_msg.data,
+                                    &hdr); // NULL
+        }
+        else if (received_msg.msg_id == DISTANCE_SENSOR_ID) {
+            msg_hdr_t hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
+            SENSOR_TX_SENSOR_SONARS_decode(&sensor_msg,
+                                    (uint64_t*)&received_msg.data,
+                                    &hdr); // NULL
+        }
+        else if (received_msg.msg_id == LIGHT_BATTERY_SENSOR_ID) {
+            msg_hdr_t hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
+            SENSOR_TX_SENSOR_LIGHT_BAT_decode(&sensor_bat_msg,
+                                    (uint64_t*)&received_msg.data,
+                                    &hdr); // NULL
+        }
+        else if (received_msg.msg_id == GEO_LOC_DATA_ID) {
+            msg_hdr_t hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
+            GEO_TX_GEO_LOC_DATA_decode(&geo_loc_msg,
+                                    (uint64_t*)&received_msg.data,
+                                    &hdr); // NULL
         }
 
-   /* geo_msg.GEO_ANGLE_bearing_cmd = 20;
-    geo_msg.GEO_ANGLE_heading_cmd = 20;
-    geo_msg.GEO_SPEED_cmd = 10;
-*/
+
         return true;
     }
 }
