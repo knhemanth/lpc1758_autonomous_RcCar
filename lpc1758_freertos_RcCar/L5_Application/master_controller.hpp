@@ -35,7 +35,7 @@
 #define RESET   ( 1 )
 #define NORESET ( 0 )
 
-#define HEARTBEAT ( 1 )
+#define HEARTBEAT ( 0 )
 #define DEBUG ( 1 )
 #define ZONE_CALCULATION  ( 0 )
 #define OBSTACLE_AVOIDANCE ( 1 )
@@ -56,6 +56,7 @@
 #define degreesToRadians(angleDegrees) (angleDegrees * M_PI / 180.0)
 
 #define GEO_LOC_MIA_MAX_COUNT   100
+#define GEO_HEADING_BEARING_MIA_MAX_COUNT 100
 #define MIN_DISTANCE_TO_CHKPT   3
 
 enum MASTER_ACK {
@@ -72,6 +73,42 @@ enum NAV_STAT{
     INVALID
 };
 
+/*
+ * We divide the zone (visualized as a 360 degree area into 30 regions - These zones will be part of 7 groups.
+ */
+enum ZONE_EDGE {
+    ZONE_EDGE0 = 0,
+    ZONE_EDGE1 = 12,
+    ZONE_EDGE2 = 36,
+    ZONE_EDGE3 = 96,
+    ZONE_EDGE4 = 180,
+    ZONE_EDGE5 = 264,
+    ZONE_EDGE6 = 312,
+    ZONE_EDGE7 = 348,
+    ZONE_EDGE8 = 359
+};
+
+/*
+ * The naming convention defines the sort of action that will occur in each zone
+ *
+ * STR - Straight
+ * SR - Slight Right
+ * HR - Hard Right
+ * UR - U-turn Right
+ * UL - U-turn Left
+ * HL - Hard Left
+ * SL - Sight Left
+ */
+enum ZONE_NAVI {
+    ZONE_NAVI_STR = 0,
+    ZONE_NAVI_SR,
+    ZONE_NAVI_HR,
+    ZONE_NAVI_UR,
+    ZONE_NAVI_UL,
+    ZONE_NAVI_HL,
+    ZONE_NAVI_SL
+};
+
 /* Function Prototypes */
 bool master_controller_init( void );
 void check_heartbeat( void );
@@ -86,5 +123,6 @@ char printMotorDirection(uint8_t data);
 char printMotorSpeed(uint8_t data);
 
 int getZoneInformation(float value);
+ZONE_NAVI getNavigationZone(uint32_t difference);
 
 #endif /* L5_APPLICATION_MASTER_CONTROLLER_HPP_ */
