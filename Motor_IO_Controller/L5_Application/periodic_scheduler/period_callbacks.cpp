@@ -91,7 +91,7 @@ void period_10Hz(void)
 
 void period_100Hz(void)
 {
-    receive_data();             // Receive CAN data from Master
+    receive_data();             // Receive CAN data from Master & other Controllers
 }
 
 void period_1000Hz(void)
