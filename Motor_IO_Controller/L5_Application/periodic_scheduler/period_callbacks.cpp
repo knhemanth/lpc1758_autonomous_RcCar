@@ -57,7 +57,7 @@ bool period_init(void)
     while(!status);                 // If CAN bus is not ready then no need to go further
 
     motor_init();                   // Initialize PWM sequence for DC and Servo motor
-    lcd_init();                     // Initialize UART 3 for LCD
+    lcd_init();                     // Initialize UART 2 for LCD
     return true;                    // Must return true upon success
 }
 

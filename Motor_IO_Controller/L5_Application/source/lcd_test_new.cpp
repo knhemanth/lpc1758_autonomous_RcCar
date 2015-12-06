@@ -51,7 +51,7 @@ void flag_page_change(bool* flagp){
 }
 
 void lcd_init(void) {
-    U3.init(115200,100,100);
+    U2.init(115200,100,100);
 }
 
 void put_comm(char a,char b,char c, char d,char e) {
@@ -61,24 +61,24 @@ void put_comm(char a,char b,char c, char d,char e) {
     }
 
     for(int i=0;i<6;i++) {
-        U3.putChar(comm[i],10);
+        U2.putChar(comm[i],10);
     }
-    U3.getChar(&ack,10);
+    U2.getChar(&ack,10);
 }
 
 void put_string(char array[], uint8_t object_no, uint8_t num){
     uint8_t checksum=0x02^object_no^num;
-    U3.putChar(0x02,10);
-    U3.putChar(object_no,10);
-    U3.putChar(num,10);
+    U2.putChar(0x02,10);
+    U2.putChar(object_no,10);
+    U2.putChar(num,10);
 
     for(int i=0;i<num;i++){
-        U3.putChar(array[i],10);
+        U2.putChar(array[i],10);
         checksum^=array[i];
     }
 
-    U3.putChar(checksum,10);
-    U3.getChar(&ack,10);
+    U2.putChar(checksum,10);
+    U2.getChar(&ack,10);
 }
 
 
@@ -123,9 +123,9 @@ void lcd_print(){
      if(lcdscreen == Geo){
          put_comm(0x01, 0x07, 0x01, 0x00, geo_msg.GEO_ANGLE_heading_cmd);
          static char string[30]={0};
-         sprintf(string,"1st number %x", geo_loc_msg.GEO_LOC_LAT_cmd);
+         sprintf(string,"%x", geo_loc_msg.GEO_LOC_LAT_cmd);
          put_string(string, 0,(uint8_t)strlen(string));
-         sprintf(string,"2nd number %x", geo_loc_msg.GEO_LOC_LONG_cmd);
+         sprintf(string,"%x", geo_loc_msg.GEO_LOC_LONG_cmd);
          put_string(string, 1,(uint8_t)strlen(string));
      }
      else if(lcdscreen == Sensors){
@@ -160,12 +160,12 @@ void lcd_print(){
 
 void lcd_receive(){
 
-      U3.getChar(&lcd_char,0);
+      U2.getChar(&lcd_char,0);
       if (lcd_char == 0x07)
       {
           Bytes6[0]=lcd_char;
           for(int i=1;i<6;i++) {
-              U3.getChar(Bytes6+i,0);
+              U2.getChar(Bytes6+i,0);
           }
       }
 }

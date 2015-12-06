@@ -36,7 +36,7 @@
 #include "light_sensor.hpp"
 #include "switches.hpp"
 #include "temperature_sensor.hpp"
-#include "uart3.hpp"
+#include "uart2.hpp"
 
 
 /**
@@ -50,7 +50,7 @@
 #define LD      LED_Display::getInstance()         ///< 2-Digit LED Display
 #define LE      LED::getInstance()                 ///< 4 On-board LEDs
 #define SW      Switches::getInstance()            ///< 4 On-board Switches
-#define U3      Uart3::getInstance()
+#define U2      Uart2::getInstance()
 /** @} */
 
 
