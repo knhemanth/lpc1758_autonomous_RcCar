@@ -1129,7 +1129,7 @@ uint64_t calculateDistance(geo_loc *geo_location_ref)
     float b = ((sin(dLat/2))*(sin(dLat/2))) + (cos(startLat) * cos(endLat) * (sin(dLong/2))*sin(dLong/2));
     float c = 2 * atan2(sqrt(b), sqrt(1-b));
 
-    uint64_t d = EARTH_RADIUS_KM * c * 1000 * 10000;
+    uint64_t d = EARTH_RADIUS_KM * c * 1000;
 
     return d;
 }

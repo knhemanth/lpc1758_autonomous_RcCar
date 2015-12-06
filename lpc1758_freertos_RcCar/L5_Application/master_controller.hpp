@@ -36,7 +36,7 @@
 #define NORESET ( 0 )
 
 #define HEARTBEAT ( 0 )
-#define DEBUG ( 1 )
+#define DEBUG ( 0 )
 #define ZONE_CALCULATION  ( 0 )
 #define OBSTACLE_AVOIDANCE ( 1 )
 
