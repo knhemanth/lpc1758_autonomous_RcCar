@@ -1083,9 +1083,9 @@ void navigate_to_next_chkpt( void )
 }
 
 ZONE_NAVI getNavigationZone(uint32_t difference) {
-    ZONE_NAVI zone_info;
+    ZONE_NAVI zone_info = ZONE_NAVI_STR;
 
-    if((difference > ZONE_EDGE7) && (difference <= ZONE_EDGE1)) {
+    if(((difference > ZONE_EDGE7) && (difference <= ZONE_EDGE8))|| ((difference >= ZONE_EDGE0) && (difference <= ZONE_EDGE1)))  {
         zone_info = ZONE_NAVI_STR;
     }
 
