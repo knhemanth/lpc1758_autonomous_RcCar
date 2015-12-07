@@ -30,6 +30,8 @@ extern SENSOR_TX_SENSOR_SONARS_t sensor_msg;
 extern GEO_TX_GEO_LOC_DATA_t geo_loc_msg;
 extern SENSOR_TX_SENSOR_LIGHT_BAT_t sensor_bat_msg;
 
+extern can_msg_t motor_lcd,geo_lcd,sensor_lcd,geo_loc_lcd;
+
 char Bytes6[6]={0};                 // 6 bytes received from the LCD
 char ack=0;                         // Acknowledge byte from LCD
 
@@ -119,16 +121,20 @@ void lcd_print(){
           put_comm(0x01,0x0a,0x00,0x00,0x00); // switch to form0
           flag_page_change(&flag_home_page);
       }
-
+/*
      if(lcdscreen == Geo){
          put_comm(0x01, 0x07, 0x01, 0x00, geo_msg.GEO_ANGLE_heading_cmd);
          static char string[30]={0};
-         sprintf(string,"%x", geo_loc_msg.GEO_LOC_LAT_cmd);
+         sprintf(string,"%f", geo_loc_msg.GEO_LOC_LAT_cmd);
          put_string(string, 0,(uint8_t)strlen(string));
-         sprintf(string,"%x", geo_loc_msg.GEO_LOC_LONG_cmd);
+         sprintf(string,"%f", geo_loc_msg.GEO_LOC_LONG_cmd);
          put_string(string, 1,(uint8_t)strlen(string));
      }
      else if(lcdscreen == Sensors){
+         printf("left:%d\n",sensor_msg.SENSOR_SONARS_front_left);
+         printf("right:%d\n",sensor_msg.SENSOR_SONARS_front_right);
+         printf("center:%d\n",sensor_msg.SENSOR_SONARS_front_center);
+         //printf("ds_center:%d\n",dist_sensor_can_msg.data.bytes[0]);
          put_comm(0x01, 0x0b, 0x00, 0x00, sensor_msg.SENSOR_SONARS_front_center);
          put_comm(0x01, 0x0b, 0x02, 0x00, sensor_msg.SENSOR_SONARS_front_left);
          put_comm(0x01, 0x0b, 0x01, 0x00, sensor_msg.SENSOR_SONARS_front_right);
@@ -148,13 +154,56 @@ void lcd_print(){
          }
      }
      else if(lcdscreen == Motor){
+         //printf("speed:%d\n",motor_msg.MOTORIO_DIRECTION_speed_cmd);
+         //printf("turn:%d\n",motor_msg.MOTORIO_DIRECTION_turn_cmd);
          put_comm(0x01, 0x0b, 0x06, 0x00, motor_msg.MOTORIO_DIRECTION_speed_cmd);
          put_comm(0x01, 0x10, 0x00, 0x00, motor_msg.MOTORIO_DIRECTION_turn_cmd);
          if(motor_msg.MOTORIO_DIRECTION_turn_cmd==back)
              put_comm(0x01, 0x0b, 0x07, 0x00, motor_msg.MOTORIO_DIRECTION_turn_cmd);
          else
              put_comm(0x01, 0x10, 0x00, 0x00, 0);
-     }
+     }*/
+     if(lcdscreen == Geo){
+              put_comm(0x01, 0x07, 0x01, geo_lcd.data.bytes[2], geo_lcd.data.bytes[1]);
+              static char string[30]={0};
+              sprintf(string,"%f", geo_loc_lcd.data.dwords[0]);
+              put_string(string, 0,(uint8_t)strlen(string));
+              sprintf(string,"%f", geo_loc_lcd.data.dwords[1]);
+              put_string(string, 1,(uint8_t)strlen(string));
+          }
+          else if(lcdscreen == Sensors){
+              printf("left:%d\n",sensor_lcd.data.bytes[0]);
+              printf("right:%d\n",sensor_lcd.data.bytes[1]);
+              printf("center:%d\n",sensor_lcd.data.bytes[2]);
+              //printf("ds_center:%d\n",dist_sensor_can_msg.data.bytes[0]);
+              put_comm(0x01, 0x0b, 0x00, 0x00, sensor_lcd.data.bytes[2]);
+              put_comm(0x01, 0x0b, 0x02, 0x00, sensor_lcd.data.bytes[0]);
+              put_comm(0x01, 0x0b, 0x01, 0x00, sensor_lcd.data.bytes[1]);
+              put_comm(0x01, 0x0b, 0x04, 0x00, sensor_lcd.data.bytes[3]);
+              put_comm(0x01, 0x0b, 0x03, 0x00, sensor_lcd.data.bytes[4]);
+              put_comm(0x01, 0x0b, 0x05, 0x00, sensor_lcd.data.bytes[5]);
+          }
+          else if(lcdscreen == home){
+              put_comm(0x01, 0x1a, 0x00, 0x00, sensor_bat_msg.SENSOR_BAT_cmd); // setting the battery meter here
+              if(Bytes6[1]==0x21 && Bytes6[2]==0x00){
+                  headlights_on = headlights_on? false:true;
+                  if(headlights_on)
+                      put_comm(0x01, 0x13, 0x00, 0x00, 0x01);
+                  else
+                      put_comm(0x01, 0x13, 0x00, 0x00, 0x00);
+                  Bytes6[1] = 0x00;
+              }
+          }
+          else if(lcdscreen == Motor){
+              //printf("speed:%d\n",motor_msg.MOTORIO_DIRECTION_speed_cmd);
+              //printf("turn:%d\n",motor_msg.MOTORIO_DIRECTION_turn_cmd);
+              put_comm(0x01, 0x0b, 0x06, 0x00, motor_lcd.data.bytes[0]);
+              put_comm(0x01, 0x10, 0x00, 0x00, motor_lcd.data.bytes[1]);
+              if(motor_msg.MOTORIO_DIRECTION_turn_cmd==back)
+                  put_comm(0x01, 0x0b, 0x07, 0x00, motor_lcd.data.bytes[1]);
+              else
+                  put_comm(0x01, 0x10, 0x00, 0x00, 0);
+          }
 
 }
 
