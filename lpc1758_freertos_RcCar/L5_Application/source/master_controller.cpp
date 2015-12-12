@@ -593,8 +593,13 @@ bool avoid_obstacle(void)
     }
     else
     {
-        motor_data.turn = (uint8_t) STRAIGHT;
-        motor_data.speed = (uint8_t) NORMAL;
+        // We are avoiding Obstacles only for NEAR and MID Obstacles.
+        // For all others, we are clear to move.
+
+        return false;
+
+        //motor_data.turn = (uint8_t) STRAIGHT;
+        //motor_data.speed = (uint8_t) NORMAL;
     }
 
 #endif
