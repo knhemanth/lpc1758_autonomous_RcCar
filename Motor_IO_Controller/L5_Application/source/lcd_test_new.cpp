@@ -178,6 +178,8 @@ void lcd_print(){
           put_string(string, 1,(uint8_t)strlen(string));
           sprintf(string,"%i", gsaPtr->bearing);
           put_string(string, 2,(uint8_t)strlen(string));
+          sprintf(string,"%i", (gsaPtr->distance)/10000);
+          put_string(string, 3,(uint8_t)strlen(string));
       }
       else if(lcdscreen == Sensors){
           //printf("left:%d\n",sensor_lcd.data.bytes[0]);
