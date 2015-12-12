@@ -101,8 +101,8 @@ bool transmit_data(can_msg_t transmit_msg){
 bool receive_data(){
     // XXX: This should be a while loop to empty the CAN receive queues
 
-    //while(CAN_rx(MOTORIO_CNTL_CANBUS, &received_msg, 0)) {
-        if(CAN_rx(MOTORIO_CNTL_CANBUS, &received_msg, 0)){
+    while(CAN_rx(MOTORIO_CNTL_CANBUS, &received_msg, 0)) {
+    //    if(CAN_rx(MOTORIO_CNTL_CANBUS, &received_msg, 0)){
 /*
         if(received_msg.msg_id == DISTANCE_SENSOR_ID){
             printf("yes\n");
@@ -167,12 +167,13 @@ bool receive_data(){
             case GEO_LOC_DATA_ID:
                 //printf("in geo loc data\n");
                 geo_loc_lcd = received_msg;
+
                 hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
                 GEO_TX_GEO_LOC_DATA_decode(&geo_loc_msg,
                                         (uint64_t*)&received_msg.data,
                                         &hdr); // NULL
                 break;
-            default: printf("default\n");
+            default: //printf("default\n");
                 break;
         }
     }
