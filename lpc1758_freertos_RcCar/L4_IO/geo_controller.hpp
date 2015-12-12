@@ -47,7 +47,7 @@ void geo_send_heading();
 void geo_send_heartbeat();
 bool receive_master_checkpoint();
 uint64_t calculateDistance(geo_location&);
-uint16_t calculateBearing(geo_location&);
+uint32_t calculateBearing(geo_location&);
 void geo_check_master_reset();
 
 #ifdef __cplusplus
