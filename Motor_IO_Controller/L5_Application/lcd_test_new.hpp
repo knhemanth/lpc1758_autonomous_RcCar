@@ -8,10 +8,12 @@
 #ifndef L5_APPLICATION_LCD_TEST_NEW_HPP_
 #define L5_APPLICATION_LCD_TEST_NEW_HPP_
 
-
-//#include "utilities.h"
-
 #include "can_msg_id.hpp"
+
+#define LCD_UART_BAUD           115200
+#define LCD_UART_RXQSIZE        100
+#define LCD_UART_TXQSIZE        100
+
 /*
  *lcd_screen_t is enum type for user input on LCD
  *User will select the particular screen he wants on home screen

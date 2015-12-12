@@ -52,8 +52,9 @@ void flag_page_change(bool* flagp){
     *flagp = true;
 }
 
+/* Function to initialize UART for LCD */
 void lcd_init(void) {
-    U2.init(115200,100,100);
+    U2.init(LCD_UART_BAUD,LCD_UART_RXQSIZE,LCD_UART_TXQSIZE);
 }
 
 void put_comm(char a,char b,char c, char d,char e) {
@@ -68,6 +69,7 @@ void put_comm(char a,char b,char c, char d,char e) {
     U2.getChar(&ack,10);
 }
 
+/* Function to print string on LCD */
 void put_string(char array[], uint8_t object_no, uint8_t num){
     uint8_t checksum=0x02^object_no^num;
     U2.putChar(0x02,10);
@@ -83,7 +85,7 @@ void put_string(char array[], uint8_t object_no, uint8_t num){
     U2.getChar(&ack,10);
 }
 
-
+/* Function to print different data on LCD */
 void lcd_print(){
 
      static bool headlights_on = false;
@@ -173,25 +175,25 @@ void lcd_print(){
           static char string[30]={0};
 
           sprintf(string,"%f", (float)geo_loc_Ptr->latitude);
-          put_string(string, 0,(uint8_t)strlen(string));
+          put_string(string, 0,(uint8_t)strlen(string));                //Print Latitude on LCD
           sprintf(string,"%f", (float)geo_loc_Ptr->longitude);
-          put_string(string, 1,(uint8_t)strlen(string));
+          put_string(string, 1,(uint8_t)strlen(string));                //Print Longitude on LCD
           sprintf(string,"%i", gsaPtr->bearing);
-          put_string(string, 2,(uint8_t)strlen(string));
+          put_string(string, 2,(uint8_t)strlen(string));                //Print desired Bearing of car on LCD
           sprintf(string,"%f", (float)(gsaPtr->distance)/10000);
-          put_string(string, 3,(uint8_t)strlen(string));
+          put_string(string, 3,(uint8_t)strlen(string));                //Print Car's Distance from next checkpoint on LCD
       }
       else if(lcdscreen == Sensors){
           //printf("left:%d\n",sensor_lcd.data.bytes[0]);
           //printf("right:%d\n",sensor_lcd.data.bytes[1]);
           //printf("center:%d\n",sensor_lcd.data.bytes[2]);
           //printf("ds_center:%d\n",dist_sensor_can_msg.data.bytes[0]);
-          put_comm(0x01, 0x0b, 0x00, 0x00, sensor_lcd.data.bytes[2]);
-          put_comm(0x01, 0x0b, 0x02, 0x00, sensor_lcd.data.bytes[0]);
-          put_comm(0x01, 0x0b, 0x01, 0x00, sensor_lcd.data.bytes[1]);
-          put_comm(0x01, 0x0b, 0x04, 0x00, sensor_lcd.data.bytes[3]);
-          put_comm(0x01, 0x0b, 0x03, 0x00, sensor_lcd.data.bytes[4]);
-          put_comm(0x01, 0x0b, 0x05, 0x00, sensor_lcd.data.bytes[5]);
+          put_comm(0x01, 0x0b, 0x00, 0x00, sensor_lcd.data.bytes[2]);       //Print Front_Center sensor data on LCD
+          put_comm(0x01, 0x0b, 0x02, 0x00, sensor_lcd.data.bytes[0]);       //Print Front_Left sensor data on LCD
+          put_comm(0x01, 0x0b, 0x01, 0x00, sensor_lcd.data.bytes[1]);       //Print Front_Right sensor data on LCD
+          put_comm(0x01, 0x0b, 0x04, 0x00, sensor_lcd.data.bytes[3]);       //Print Left sensor data on LCD
+          put_comm(0x01, 0x0b, 0x03, 0x00, sensor_lcd.data.bytes[4]);       //Print Right sensor data on LCD
+          put_comm(0x01, 0x0b, 0x05, 0x00, sensor_lcd.data.bytes[5]);       //Print Back sensor data on LCD
       }
       else if(lcdscreen == home){
           put_comm(0x01, 0x1a, 0x00, 0x00, sensor_bat_msg.SENSOR_BAT_cmd); // setting the battery meter here
@@ -207,8 +209,8 @@ void lcd_print(){
       else if(lcdscreen == Motor){
           //printf("speed:%d\n",motor_msg.MOTORIO_DIRECTION_speed_cmd);
           //printf("turn:%d\n",motor_msg.MOTORIO_DIRECTION_turn_cmd);
-          put_comm(0x01, 0x0b, 0x06, 0x00, motor_lcd.data.bytes[0]);
-          put_comm(0x01, 0x10, 0x00, 0x00, motor_lcd.data.bytes[1]);
+          put_comm(0x01, 0x0b, 0x06, 0x00, motor_lcd.data.bytes[0]);        //Print Motor Speed data on LCD
+          put_comm(0x01, 0x10, 0x00, 0x00, motor_lcd.data.bytes[1]);        //Print Motor turn data on LCD
           if(motor_msg.MOTORIO_DIRECTION_turn_cmd==back)
               put_comm(0x01, 0x0b, 0x07, 0x00, motor_lcd.data.bytes[1]);
           else
@@ -217,6 +219,7 @@ void lcd_print(){
 
 }
 
+/* Function to receive touch screen data from LCD */
 void lcd_receive(){
 
       U2.getChar(&lcd_char,0);
