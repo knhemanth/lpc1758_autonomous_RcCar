@@ -887,7 +887,7 @@ void navigate_to_next_chkpt( void )
 
     can_fullcan_msg_t* can_msg_heading_bearing_ptr = NULL;
     static can_fullcan_msg_t can_msg_heading_bearing_data;
-    uint32_t difference_heading_bearing = 0;
+    int32_t difference_heading_bearing = 0;
     ZONE_NAVI navigation_zone;
 
     motor_direction motor_data;
@@ -1003,7 +1003,14 @@ void navigate_to_next_chkpt( void )
                 heading_bearing_ptr = (geo_spd_angle*)(&(can_msg_heading_bearing_ptr->data.qword));
 
                 //calculate the absolute difference between heading and bearing
-                difference_heading_bearing = abs( int(heading_bearing_ptr->heading - heading_bearing_ptr->bearing) );
+                difference_heading_bearing = (int32_t)(heading_bearing_ptr->bearing - heading_bearing_ptr->heading);
+
+                // Adding Zone Offset
+                if(difference_heading_bearing < 0)
+                {
+                    difference_heading_bearing += 360;
+                }
+
                 navigation_zone = getNavigationZone(difference_heading_bearing);
 
                 switch(navigation_zone) {
