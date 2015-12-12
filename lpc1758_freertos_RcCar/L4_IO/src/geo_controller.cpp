@@ -21,7 +21,11 @@
 
 #define degreesToRadians(angleDegrees) (angleDegrees * M_PI / 180.0)
 #define radiansToDegrees(angleRadians) (angleRadians * 180.0 / M_PI)
+#define HEADING_OFFSET 70
 
+inline float to_degrees(float radians) {
+    return radians * (180.0 / M_PI);
+}
 
 
 static bool power_up_sync_geo_controller( void );
@@ -173,12 +177,14 @@ void geo_send_gps()
     {
         gps_msg.msg_id = GEO_LOC_DATA_ID;
         gps_msg.frame_fields.is_29bit = 0;
+    //    printf("LAT: %f,  LONG: %f", gps_data_dec.latitude, gps_data_dec.longitude);
         gps_msg.frame_fields.data_len = sizeof(gps_data_dec);
         memcpy(&gps_msg.data.qword, &gps_data_dec, sizeof(gps_data_dec));
         //  printf("CAN GPS TRNS: %x \n\n", gps_msg.data.qword);
 
         can_status = CAN_tx(GEO_CNTL_CANBUS, &gps_msg, GEO_CNTL_CAN_TIMEOUT);
-
+      //  printf("--\n");
+/*
         if( !can_status )
         {
             LOG_ERROR("ERROR!!! Geo controller CAN message: GPS data not sent!!");
@@ -187,6 +193,7 @@ void geo_send_gps()
 
         else
             LE.off(GEO_CAN_ERR_LED);
+  */
     }
     if(a == GEO_DO_NOT_SEND)
     {
@@ -201,7 +208,7 @@ void geo_send_gps()
         //  printf("CAN GPS TRNS: %x \n\n", gps_msg.data.qword);
 
         can_status = CAN_tx(GEO_CNTL_CANBUS, &gps_msg, GEO_CNTL_CAN_TIMEOUT);
-
+/*
         if( !can_status )
         {
             LOG_ERROR("ERROR!!! Geo controller CAN message: GPS data not sent!!");
@@ -210,11 +217,12 @@ void geo_send_gps()
 
         else
             LE.off(GEO_CAN_ERR_LED);
+        */
     }
 
 }
 
-uint16_t calculateBearing(geo_location& geo_location_ref)
+uint32_t calculateBearing(geo_location& geo_location_ref)
 {
     float startLat = degreesToRadians(gps_data_dec.latitude);
     float startLong = degreesToRadians(gps_data_dec.longitude);
@@ -226,8 +234,17 @@ uint16_t calculateBearing(geo_location& geo_location_ref)
     float x = cos(startLat) * sin(endLat) - sin(startLat)* cos(endLat) * cos(dLong);
 
     float brng = atan2(y,x);
-    uint16_t brng1 = radiansToDegrees(brng);
-    return brng1;
+    float true1 = to_degrees(brng);
+
+    if( true1 < 0)
+    {
+        uint32_t true2;
+        true2 = 360 + true1;
+        return true2;
+    }
+    //printf("\nBearing : %d", true1);
+   // uint32_t brng1 = radiansToDegrees(brng);
+   return true1;
 }
 
 uint64_t calculateDistance(geo_location& geo_location_ref)
@@ -243,8 +260,10 @@ uint64_t calculateDistance(geo_location& geo_location_ref)
     float b = ((sin(dLat/2))*(sin(dLat/2))) + (cos(startLat) * cos(endLat) * (sin(dLong/2))*sin(dLong/2));
     float c = 2 * atan2(sqrt(b), sqrt(1-b));
 
-    uint64_t d = EARTH_RADIUS_KM * c * 1000 * 10000;
-    return d;
+    uint64_t d = EARTH_RADIUS_KM * c * 1000;
+   // printf("\nDis: %u", d);
+    uint64_t e =  d* 10000;
+    return e;
 }
 
 
@@ -257,20 +276,34 @@ void geo_send_heading()
     {
         static imu& imu_handle = IMUInterface;  // Handle to singleton IMU object
         uint16_t imu_heading = 0;       // 2-byte angle between 0 and 360. Compromise with precision
-        imu_heading = static_cast<uint16_t>(imu_handle.getHeading());
+        imu_heading = (uint16_t)(imu_handle.getHeading());
+        //printf("IMU-------> %d\n", imu_heading);
+        imu_heading = (imu_handle.getHeading());
 
+      //  printf("IMU2-------> %f\n", imu_handle.getHeading());
         // Call func to calculate bearing
         geo_data.bearing = calculateBearing(current_checkpoint_data);   // put bearing here
-        geo_data.heading = imu_heading;
+        geo_data.heading = imu_handle.getHeading();
+#if 1
+        if(geo_data.heading < HEADING_OFFSET && geo_data.heading >= 0)
+        {
+            geo_data.heading = 360 - HEADING_OFFSET + (geo_data.heading);
+        }
+        else
+        {
+            geo_data.heading = geo_data.heading - HEADING_OFFSET;
+        }
+#endif
         geo_data.speed = speed_gps;
         geo_data.distance = (uint16_t)calculateDistance(current_checkpoint_data);
+        //   printf("Heading: %d",(uint32_t)geo_data.heading);
     }
 
     if(a == GEO_DO_NOT_SEND)
     {
         // Call func to calculate bearing
         geo_data.bearing = 0;   // put bearing here
-        geo_data.heading = 0;
+        geo_data.heading = 10;
         geo_data.speed = 0;
         geo_data.distance = 0;
     }
@@ -283,8 +316,10 @@ void geo_send_heading()
 
     // CAN_Tx() will only time out when TX queue is full and that will only
     // happen when CAN Bus turns off too long for us to empty the TX queue
-    can_status = CAN_tx(GEO_CNTL_CANBUS, &geo_msg, GEO_CNTL_CAN_TIMEOUT);
 
+    can_status = CAN_tx(GEO_CNTL_CANBUS, &geo_msg, GEO_CNTL_CAN_TIMEOUT);
+   // printf("-\n");
+/*
     if( !can_status )
     {
         LOG_ERROR("ERROR!!! Geo controller CAN message: IMU data not sent!!");
@@ -293,7 +328,7 @@ void geo_send_heading()
 
     else
         LE.off(GEO_CAN_ERR_LED);
-
+*/
 }
 
 void geo_send_heartbeat( void )
@@ -349,6 +384,7 @@ bool receive_master_checkpoint()
                    gps_data_master = (geo_location *)&geo_gps_msg_copy.data;
                    current_checkpoint_data.latitude = gps_data_master->latitude;
                    current_checkpoint_data.longitude = gps_data_master->longitude;
+                  // printf("%f, %f \n",current_checkpoint_data.latitude,current_checkpoint_data.longitude);
                    return true;
                }
         else

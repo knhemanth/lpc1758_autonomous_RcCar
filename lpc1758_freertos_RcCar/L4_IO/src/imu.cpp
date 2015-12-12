@@ -5,7 +5,6 @@
  *      Author: Akshay Vijaykumar
  */
 
-
 #include <stdlib.h>             // strtof()
 #include "imu.hpp"
 #include "io.hpp"
@@ -26,7 +25,7 @@
  */
 imu::imu():
     imuUart(Uart3::getInstance()),
-    imuResetPin(P2_5),
+    imuResetPin(P2_2),
     readYawCommand{'#', 'f'},
     imu_old_heading(0.0),
         err_count(0),
@@ -206,7 +205,7 @@ float imu::getHeading( void )
         imu_old_heading = imu_heading;
 
     }
-
+  //  printf("%f------>\n", imu_heading);
     return imu_heading;
 }
 
@@ -232,7 +231,21 @@ bool IMUTask::run(void *p)
             CUSTOM_DEBUG("IMUTask : Read fail");
         }
     }
+    uint16_t imu_heading = 0;       // 2-byte angle between 0 and 360. Compromise with precision
+    imu_heading = static_cast<uint16_t>(IMUInterface.getHeading());
 
+#if 0
+        if(imu_heading  > (360 - HEADING_OFFSET) && imu_heading <= 360)
+        {
+            imu_heading = HEADING_OFFSET - (360 - (imu_heading));
+        }
+        else
+        {
+            imu_heading = imu_heading + HEADING_OFFSET;
+        }
+#endif
+
+        //  printf("\nIMU: %d", imu_heading);
     // This task should now sleep for 50ms.
     vTaskDelayMs(IMUTASK_DELAY);
 
