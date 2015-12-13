@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.Vector;
 
 import javax.xml.transform.Source;
 
@@ -204,7 +205,14 @@ import javax.xml.transform.Source;
                 Toast.makeText(MapsActivity.this, "Please ensure that you are connected to the internet", Toast.LENGTH_LONG).show();
             }
 
-            //AlertDialog dialog = new makeRouteDialogFragment()
+            //location button override
+            mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+                @Override
+                public boolean onMyLocationButtonClick() {
+                    Toast.makeText(MapsActivity.this, "Clicked the location button", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+            });
 
             //initialize your latlng array
             MarkerPoints = new ArrayList<LatLng>();
@@ -435,7 +443,7 @@ import javax.xml.transform.Source;
             String originStr = "origin=" + origin.latitude + "," + origin.longitude;
             String destinationStr = "destination=" + destination.latitude + "," + destination.longitude;
             String output = "json";
-            String parameters = originStr + "&" + destinationStr + "&mode=walking&key=AIzaSyCwfUYxgA3FXrxX6RqlOJVbf16lHGa7uSs";
+            String parameters = originStr + "&" + destinationStr + "&mode=bicycling&key=AIzaSyCwfUYxgA3FXrxX6RqlOJVbf16lHGa7uSs";
             String path = origin.latitude + "," + origin.longitude + "|" + destination.latitude + "," + destination.longitude;
             //building the string for the web service
             String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
@@ -561,7 +569,10 @@ import javax.xml.transform.Source;
                         //CarRoute +=  "" + lat + " " + lng + " ";
                         //Log.d(TAG, CarRoute);
                         //Log.d(TAG, position.toString());
-                        if ((j % 2 == 0)) {
+                        if ((j % 2 == 1) && path.size() > 15) {
+                            //skip this point
+                            continue;
+                        }
                             mMap.addMarker(markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
                                     .position(position)
                                     .title("latitude: " + lat + ", " + "longitude: " + lng));
@@ -574,16 +585,24 @@ import javax.xml.transform.Source;
                             int temp_Lon = (int) (lng * 1000000);
                             templon_ = temp_Lon / 1000000d;
 
+
                             CarRoute += "" + templat_ + " " + templon_ + " ";
                             ++Count_Ordinates;
-                        }
+
+
+                        //plot points on the map
                         points.add(position);
 
                     }
+
                     CarRoute += destinationLat + " " + destinationLon;
                     Count_Ordinates +=1;
                     Log.d(TAG, CarRoute);
                     Log.d(TAG, Integer.toString(Count_Ordinates));
+
+                    //check if the number of coordinates exceeds 15
+
+
                     //adding all points in the route to lineOptions
                     lineOptions.addAll(points);
                     lineOptions.width(5);
