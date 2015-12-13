@@ -70,6 +70,10 @@ import javax.xml.transform.Source;
         int Count_Ordinates = 0;
         double destinationLat;
         double destinationLon;
+        int lat_lon_count = 1;
+        // source location lat and long for setting source marker automatically
+        double source_lat;
+        double source_long;
 
         Button btnOn, btnOff,btOn,btConnect,btdisconnect, sndrt;
         int BT_CONNECT_CODE = 1;
@@ -91,10 +95,10 @@ import javax.xml.transform.Source;
         private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
         //HC-06 module MAC -- slave only
-        private static String address = "20:15:03:03:09:75";
+        //private static String address = "20:15:03:03:09:75";
 
         //HC=05 module MAC --  master/slave
-        //private static String address = "20:15:08:13:10:18";
+        private static String address = "20:15:08:13:10:18";
 
         private static String tx_data1 = "0 \n";
        // private static String tx_data2 = "0 \n";
@@ -191,8 +195,19 @@ import javax.xml.transform.Source;
                         case 1:
                             String writeMessage = new String(writeBuf);
                             writeMessage = writeMessage.substring(begin, end);
-                            disp_temp_str = writeMessage;
-                            Log.d(TAG, disp_temp_str);
+                            if(lat_lon_count == 1)
+                            {
+                                source_lat = Double.parseDouble(writeMessage);
+                                Log.d(TAG, disp_temp_str);
+                                lat_lon_count = 2;
+                            }
+                            else if(lat_lon_count == 2)
+                            {
+                                source_long = Double.parseDouble(writeMessage);
+                                Log.d(TAG, disp_temp_str);
+                                lat_lon_count = 1;
+                            }
+
                             txt.setText("Data from HC-05: " + disp_temp_str);            // update TextView
                             break;
                     }
