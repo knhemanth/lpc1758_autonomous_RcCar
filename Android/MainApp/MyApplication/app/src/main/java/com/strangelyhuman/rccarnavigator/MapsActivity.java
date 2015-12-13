@@ -89,14 +89,14 @@ import javax.xml.transform.Source;
         // SPP UUID service
         private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-        //HC-06 module MAC
-        //private static String address = "20:15:03:03:09:75";
+        //HC-06 module MAC -- slave only
+        private static String address = "20:15:03:03:09:75";
 
-        //HC=05 module MAC
-        private static String address = "20:15:08:13:10:18";
+        //HC=05 module MAC --  master/slave
+        //private static String address = "20:15:08:13:10:18";
 
         private static String tx_data1 = "0 \n";
-        private static String tx_data2 = "0 \n";
+       // private static String tx_data2 = "0 \n";
 
         String disp_temp_str;
 
@@ -143,7 +143,7 @@ import javax.xml.transform.Source;
             btnOff.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if(connect == 1 && start_stop == 1) {
-                        mConnectedThread.sendData(tx_data2);
+                        mConnectedThread.sendData(tx_data1);
                         start_stop = 0;
                         Toast.makeText(getBaseContext(), "Car Stop", Toast.LENGTH_SHORT).show();
                     }
