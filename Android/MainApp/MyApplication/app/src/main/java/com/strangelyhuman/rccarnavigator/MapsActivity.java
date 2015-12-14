@@ -73,9 +73,14 @@ import javax.xml.transform.Source;
         double destinationLat;
         double destinationLon;
         int lat_lon_count = 1;
+
         // source location lat and long for setting source marker automatically
         double source_lat;
         double source_long;
+        LatLng CarSource = new LatLng(source_lat, source_long);
+
+        //Sample LatLng for testing
+        LatLng SJSU = new LatLng(37.3351874, -121.8810715);
 
         Button btnOn, btnOff,btOn,btConnect,btdisconnect, sndrt;
         int BT_CONNECT_CODE = 1;
@@ -119,7 +124,7 @@ import javax.xml.transform.Source;
             setContentView(R.layout.activity_maps);
             //Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
             setUpMapIfNeeded();
-            mMap.setMyLocationEnabled(true);
+            mMap.setMyLocationEnabled(false);
 
             btnOn = (Button) findViewById(R.id.btnOn);
             btnOff = (Button) findViewById(R.id.btnOff);
@@ -139,6 +144,7 @@ import javax.xml.transform.Source;
 
             btnOn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
+                    mMap.setMyLocationEnabled(true);
                     if(connect == 1 && start_stop == 0) {
                         mConnectedThread.sendData(tx_data1);
                         start_stop = 1;
@@ -225,8 +231,8 @@ import javax.xml.transform.Source;
             //location marker options
             final MarkerOptions locationMarkerOptions = new MarkerOptions();
             locationMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-            locationMarkerOptions.title("Your Location");
-            locationMarkerOptions.draggable(true);
+            locationMarkerOptions.title("Source");
+            locationMarkerOptions.draggable(false);
 
             //location button override
             mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
@@ -234,7 +240,11 @@ import javax.xml.transform.Source;
                 public boolean onMyLocationButtonClick() {
                     //check if start_stop variable is equal to 1 and place a marker at SourceLat and SourceLong
                     Toast.makeText(MapsActivity.this, "Finding your location...", Toast.LENGTH_SHORT).show();
-                    mMap.addMarker(locationMarkerOptions);
+                    //CarSource is the LatLng that contains the position of the Car
+                    //consider moving the camera movement to the start button
+                    //using the location button might not be necessary. Can directly tie it to the start button
+                    mMap.addMarker(locationMarkerOptions.position(CarSource));
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(CarSource, 6));
                     return false;
                 }
             });
@@ -262,41 +272,51 @@ import javax.xml.transform.Source;
                     options.position(point);
 
                     if (MarkerPoints.size() == 1) {
-                        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                        options.draggable(true);
-                        options.title("Source");
-                        Toast.makeText(MapsActivity.this, "Add a Origin Marker", Toast.LENGTH_SHORT).show();
-                    }
-
-                    if (MarkerPoints.size() == 2) {
                         options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
                         options.title("Destination" + " " + point.latitude + " " + point.longitude);
                         options.draggable(true);
                         Toast.makeText(MapsActivity.this, "Add a Destination Marker", Toast.LENGTH_SHORT).show();
                     }
 
-                 // DestinationMarker += MarkerPoints.get(1).latitude + " " + MarkerPoints.get(1).longitude;
+//                    if (MarkerPoints.size() == 1) {
+//                        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+//                        options.draggable(true);
+//                        options.title("Source");
+//                        Toast.makeText(MapsActivity.this, "Add a Origin Marker", Toast.LENGTH_SHORT).show();
+//                    }
+
+
+//                    if (MarkerPoints.size() == 2) {
+//                        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+//                        options.title("Destination" + " " + point.latitude + " " + point.longitude);
+//                        options.draggable(true);
+//                        Toast.makeText(MapsActivity.this, "Add a Destination Marker", Toast.LENGTH_SHORT).show();
+//                    }
+
+                    // DestinationMarker += MarkerPoints.get(1).latitude + " " + MarkerPoints.get(1).longitude;
+
+
+
 
 
                     //add marker to the map
                     mMap.addMarker(options);
-                    if (MarkerPoints.size() == 2) {
-                        LatLng origin = MarkerPoints.get(0); //set your origin point
-                        LatLng destination = MarkerPoints.get(1);
+                    if (MarkerPoints.size() == 1) {
+                        //LatLng origin = MarkerPoints.get(0); //set your origin point
+                        LatLng destination = MarkerPoints.get(0);
                         //getting a string for the directions api
                         int tempLat = (int) (destination.latitude * 1000000);
                         destinationLat = tempLat / 1000000d;
                         int tempLon = (int) (destination.longitude * 1000000);
                         destinationLon = tempLon / 1000000d;
                         Log.d(TAG, Double.toString(destinationLat) + " " + Double.toString(destinationLon));
-                        String url = getDirectionsUrl(origin, destination);
+                        String url = getDirectionsUrl(CarSource, destination);
                         DownloadTask downloadTask1 = new DownloadTask();
                         downloadTask1.execute(url);
                         snd_route_en = 1;
                     }
                 }
             });
-            //add an event for button route
         }
 
         private BluetoothSocket createBluetoothSocket(BluetoothDevice device) throws IOException {
