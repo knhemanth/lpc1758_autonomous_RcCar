@@ -65,9 +65,11 @@ import javax.xml.transform.Source;
         private GoogleMap mMap; // Might be null if Google Play services APK is not available.
         ArrayList<LatLng> MarkerPoints;
 
+
         private static String TAG = "Maps Activity";
         String CarRoute = "";
         int Count_Ordinates = 0;
+        boolean startButtonVariable = false;
         double destinationLat;
         double destinationLon;
 
@@ -205,11 +207,19 @@ import javax.xml.transform.Source;
                 Toast.makeText(MapsActivity.this, "Please ensure that you are connected to the internet", Toast.LENGTH_LONG).show();
             }
 
+            //location marker options
+            final MarkerOptions locationMarkerOptions = new MarkerOptions();
+            locationMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+            locationMarkerOptions.title("Your Location");
+            locationMarkerOptions.draggable(true);
+
             //location button override
             mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
                 @Override
                 public boolean onMyLocationButtonClick() {
-                    Toast.makeText(MapsActivity.this, "Clicked the location button", Toast.LENGTH_SHORT).show();
+                    //check if start_stop variable is equal to 1 and place a marker at SourceLat and SourceLong
+                    Toast.makeText(MapsActivity.this, "Finding your location...", Toast.LENGTH_SHORT).show();
+                    mMap.addMarker(locationMarkerOptions);
                     return false;
                 }
             });
@@ -256,7 +266,7 @@ import javax.xml.transform.Source;
                     //add marker to the map
                     mMap.addMarker(options);
                     if (MarkerPoints.size() == 2) {
-                        LatLng origin = MarkerPoints.get(0);
+                        LatLng origin = MarkerPoints.get(0); //set your origin point
                         LatLng destination = MarkerPoints.get(1);
                         //getting a string for the directions api
                         int tempLat = (int) (destination.latitude * 1000000);
