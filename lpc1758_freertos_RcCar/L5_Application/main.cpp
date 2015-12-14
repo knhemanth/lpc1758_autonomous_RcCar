@@ -46,6 +46,8 @@ uint8_t way_pt[2];
 chk_point_data *waypt_ptr;
 bool sync_stat = false;
 bool kill_car = true;
+extern float geo_data_arr[2];
+bool start_loc = true;
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -123,6 +125,15 @@ class bt_uart_task : public scheduler_task
                    kill_mssg.msg_id = KILL_SWITCH_ID;
                    kill_mssg.frame_fields.data_len = 8;
                    kill_mssg.frame_fields.is_29bit = 0;
+
+                   char start_loc_ptr[15];
+                   sprintf(start_loc_ptr, "%f",geo_data_arr[0]);
+                   bt_uart.put(start_loc_ptr);
+                   bt_uart.put("\n\r");
+
+                   sprintf(start_loc_ptr, "%f",geo_data_arr[1]);
+                   bt_uart.put(start_loc_ptr);
+                   bt_uart.put("\n\r");
 
                    if(kill_car == false)
                        kill_mssg.data.qword = start_car_mssg;
