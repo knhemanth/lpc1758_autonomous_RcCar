@@ -46,6 +46,7 @@
 
 // 1 - No Bluetooth App; 0 - Control via Bluetooth App
 #define BT_APP ( 1 )
+#define NAVIGATION_DEBUG (0)
 
 // Zone Thresholds
 #define ZONE_NEAR_THRESHOLD ( 50 )

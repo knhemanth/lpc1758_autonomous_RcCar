@@ -50,6 +50,11 @@ static uint64_t calculateDistance(geo_loc *geo_location_ref);
 
 static bool bus_off_status = false;
 
+#if NAVIGATION_DEBUG
+// Only for Navigation Debug
+bool nav_debug_flag = false;
+#endif
+
 bool master_controller_init()
 {
 
@@ -743,6 +748,30 @@ bool update_from_app(void)
     can_fullcan_msg_t *can_msg_app_ptr = NULL;
     can_fullcan_msg_t can_msg_app_data;
 
+#if NAVIGATION_DEBUG
+    if(nav_debug_flag)
+    {
+        command_from_app = false;
+        nav_debug_flag = false;
+
+        // Send Stop Command over CAN to Motor in case command_from_app is false
+        motor_direction motor_data;
+        can_msg_t can_motor_msg;
+
+        motor_data.speed = STOP;
+        motor_data.turn = STRAIGHT;
+
+        can_motor_msg.msg_id = MOTOR_DIRECTIONS_ID;
+        can_motor_msg.frame_fields.is_29bit = false;
+        can_motor_msg.frame_fields.data_len = sizeof(motor_direction);
+        memcpy(&can_motor_msg.data.qword, &motor_data, sizeof(can_motor_msg));
+
+        CAN_tx(MASTER_CNTL_CANBUS, &can_motor_msg, MASTER_CNTL_CAN_DELAY);
+
+        return command_from_app;
+    }
+#endif
+
     // Temporary App is sent via the Kill Switch Message ID
     can_msg_app_ptr = CAN_fullcan_get_entry_ptr(can_id_kill);
 
@@ -914,6 +943,7 @@ void navigate_to_next_chkpt( void )
         // We have reached the destination
         nav_status = STOPPED;
         nav_index = 0;
+        LD.setNumber(99);
     }
 
     else
@@ -972,6 +1002,11 @@ void navigate_to_next_chkpt( void )
                     memcpy(&can_loc_update_msg.data.qword, &next_loc, sizeof(next_loc));
 
                     CAN_tx(MASTER_CNTL_CANBUS, &can_loc_update_msg, MASTER_CNTL_CAN_DELAY);
+
+#if NAVIGATION_DEBUG
+                    nav_debug_flag = true;
+#endif
+
                 }
             }
         }
