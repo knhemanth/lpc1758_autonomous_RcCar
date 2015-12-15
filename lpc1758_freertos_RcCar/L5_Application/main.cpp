@@ -54,16 +54,14 @@ uint8_t speed_gps;
         static int i_new=0;
         while(!(LPC_UART2-> LSR & 0x01));
         GPS_buffer1[i_new]= LPC_UART2 -> RBR;
-        //printf("%c",GPS_buffer1[i_new]);
         if(GPS_buffer1[i_new]=='\n') {
            GPS_buffer1[i_new]='\0';
            flag_received = true;
-          // strcpy(GPS_new_buffer1,GPS_buffer1);
-           //GPS_new_buffer1 = GPS_buffer1;
            if(xQueueSendFromISR(gps_queue1, &GPS_buffer1 , 0)) {
 
            }
            else{
+
            }
            i_new=0;
         }
@@ -94,7 +92,7 @@ uint8_t speed_gps;
          if(xQueueReceiveFromISR(gps_queue1,&gps_global_string,0)) {
              if(flag_received==true)
               {
-               //   printf("%s\n",gps_global_string);
+
                  static int lat_degree = 0;
                  static float lat_minute = 0;
                  static int long_degree = 0;
@@ -102,19 +100,29 @@ uint8_t speed_gps;
                  static float lat_dec;
                  static float long_dec;
 
-                 lat_degree = get_lat_degree1();
-                 lat_minute = get_lat_minute1();
-                 long_degree =get_long_degree1();
-                 long_minute =get_long_minute1();
-                 speed_gps = (uint8_t)(1.150779)*get_speed_GPS1();
+                 if(gps_global_string[18] == 'A')
+                    {
 
-                 lat_dec = get_decimal1(lat_degree, lat_minute);
-                 long_dec = get_decimal1(long_degree, long_minute);
+                     lat_degree = get_lat_degree1();
+                     lat_minute = get_lat_minute1();
+                     long_degree =get_long_degree1();
+                     long_minute =get_long_minute1();
+                     speed_gps = (uint8_t)(1.150779)*get_speed_GPS1();
 
-                 gps_data_dec.latitude = lat_dec;
-                 gps_data_dec.longitude = (-1)*long_dec;
-             //    printf("\nGPS: %f , %f", gps_data_dec.latitude, gps_data_dec.longitude);
-                  flag_received = false;
+                     lat_dec = get_decimal1(lat_degree, lat_minute);
+                     long_dec = get_decimal1(long_degree, long_minute);
+
+                     gps_data_dec.latitude = lat_dec;
+                     gps_data_dec.longitude = (-1)*long_dec;
+                     flag_received = false;
+
+                    }
+
+                 if(gps_global_string[18] == 'V') {
+                     gps_data_dec.latitude = 0.0;
+                     gps_data_dec.longitude = 0.0;
+                     flag_received = false;
+                 }
               }
          }
 
@@ -124,13 +132,11 @@ uint8_t speed_gps;
 
 int main(void)
 {
-
-  //  vTaskDelayMs(5000);
-  //  delay_ms(5000);
     gps_queue1 = xQueueCreate(2, 100 * sizeof(char));
     GPIO myPin(P2_5);   // Control P1.19
     myPin.setAsOutput();
     myPin.setHigh();
+
   /* GPIO myPin_IPU(P2_2);   // Control P1.19
       myPin_IPU.setAsOutput();
       myPin_IPU.setLow();

@@ -39,7 +39,7 @@ imu::imu():
     // Initialize Uart3
     if( !(imuUart.init(IMU_UART_BAUDRATE, IMU_UART_RX_QUEUE_SIZE, IMU_UART_TX_QUEUE_SIZE)) )
     {
-        LOG_ERROR("IMU Uart Init Failed");
+      //  LOG_ERROR("IMU Uart Init Failed");
     }
     else
     {
@@ -172,18 +172,18 @@ float imu::getHeading( void )
     {
         if( err_count > IMU_ERR_BACKOFF_COUNT )
         {
-           LOG_ERROR("CRITICAL ERROR!!!! IMU not responsive\n");
+         //  LOG_ERROR("CRITICAL ERROR!!!! IMU not responsive\n");
             return -IMU_ERR;
         }
 
-        LOG_ERROR("ERROR!!! Cannot get IMU value\n");
+       // LOG_ERROR("ERROR!!! Cannot get IMU value\n");
         err_count++;
 
         // If the error_count exceeds threshold, report externally
         if( err_count > IMU_ERR_MAX_COUNT)
         {
             LE.on(1);
-            LOG_ERROR("IMU not responsive. Requesting reset\n");
+         //   LOG_ERROR("IMU not responsive. Requesting reset\n");
             resetIMU();
         }
 

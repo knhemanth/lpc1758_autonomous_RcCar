@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include "io.hpp"
 
-//extern GEO_TO_SEND a;
+extern GEO_TO_SEND a;
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -43,14 +43,11 @@ void period_1Hz(void)
 
     if(!receive_master_checkpoint())
    {
-       LE.off(1);
+      // LE.off(1);
     }
     else{
-        LE.on(1);
+      //  LE.on(1);
     }
-
-   // geo_send_heartbeat();
-   // geo_check_master_reset();
 }
 
 void period_10Hz(void)
@@ -61,12 +58,17 @@ void period_10Hz(void)
      * Don't change the order of these calls.
      * If you change then call gps getters in both functions
      */
-  //  if( a == GEO_DATA_TO_SEND){
+#if 1
+    if( a == GEO_DATA_TO_SEND){
      geo_send_gps();
      geo_send_heading();
-  //  }
-    //printf("\n------>%s",buf);
+    }
+#endif
 
+#if 0
+    geo_send_gps();
+    geo_send_heading();
+#endif
 }
 
 
