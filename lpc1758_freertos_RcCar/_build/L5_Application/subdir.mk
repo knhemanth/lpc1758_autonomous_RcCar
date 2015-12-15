@@ -4,15 +4,12 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../L5_Application/GPS3.cpp \
 ../L5_Application/main.cpp 
 
 OBJS += \
-./L5_Application/GPS3.o \
 ./L5_Application/main.o 
 
 CPP_DEPS += \
-./L5_Application/GPS3.d \
 ./L5_Application/main.d 
 
 

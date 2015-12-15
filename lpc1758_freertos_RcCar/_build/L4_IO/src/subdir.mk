@@ -4,6 +4,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../L4_IO/src/GPS3.cpp \
 ../L4_IO/src/geo_controller.cpp \
 ../L4_IO/src/gpio.cpp \
 ../L4_IO/src/imu.cpp \
@@ -11,6 +12,7 @@ CPP_SRCS += \
 ../L4_IO/src/storage.cpp 
 
 OBJS += \
+./L4_IO/src/GPS3.o \
 ./L4_IO/src/geo_controller.o \
 ./L4_IO/src/gpio.o \
 ./L4_IO/src/imu.o \
@@ -18,6 +20,7 @@ OBJS += \
 ./L4_IO/src/storage.o 
 
 CPP_DEPS += \
+./L4_IO/src/GPS3.d \
 ./L4_IO/src/geo_controller.d \
 ./L4_IO/src/gpio.d \
 ./L4_IO/src/imu.d \
