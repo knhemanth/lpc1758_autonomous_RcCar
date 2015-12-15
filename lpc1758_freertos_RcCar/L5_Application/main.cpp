@@ -32,7 +32,7 @@
 #include "stdlib.h"
 #include "GPIO.hpp"
 #include "queue.h"
-#include "GPS3.hpp"
+#include "GPS.hpp"
 #include "uart2.hpp"
 #include "utilities.h"
 #include "printf_lib.h"
