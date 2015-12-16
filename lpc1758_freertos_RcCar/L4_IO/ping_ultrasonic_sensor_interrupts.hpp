@@ -29,18 +29,16 @@
 #include "file_logger.h"
 #include "stdio.h"
 #include "can.h"    //sync up and heart beat
-#include "can_msg_id.hpp" //sync up and heart beat
+#include "can_msg_id.h" //sync up and heart beat
 #include "io.hpp"
 #include <cstring>   //for memcpy
 
 
-#define HEARTBEAT ( 0 )    //1Hz periodic
+#define HEARTBEAT ( 1 )    //1Hz periodic
 #define ZONE_INFO ( 1 )
 #define SENSOR_SEND_ON_CAN ( 1 )
 
-#define SINGLE_SENSOR ( 0 )     //testing only back sensor 4 pin ping sensor
-
-#define THREE_PIN    (1)      //Pinging three pin sensor
+#define SINGLE_SENSOR ( 0 )
 
 /* Custom Debug Print Function */
 #if 0
@@ -65,18 +63,17 @@
 
 #define MAX_SENSOR_COUNT              (3)   //PING SENSOR
 
-#define PING_CAN                      (can1) //Ping to can1
+#define PING_CAN                      (can1) //Ping to can2
 #define PING_BAUD                     (100)  //baud rate
 #define PING_TIMEOUT                  (0)    //timeout
 #define PING_HEARTBEAT_ERROR_LED      (4)    //LED4 for heartbeat error
-#define PING_ZONE_SENDING_ERROR_LED   (4)    //LED3 for zone sending error
+#define PING_ZONE_SENDING_ERROR_LED   (3)    //LED3 for zone sending error
 #define PING_CAN_BO                (1)    //LED1 for can bus off
 
-#define RIGHT_LED ( 1)
+#define RIGHT_LED ( 3 )
 #define FRONT_LED ( 2 )
-#define LEFT_LED ( 3 )
+#define LEFT_LED ( 1 )
 #define MAX_VALUE     (400)
-#define TEST_SIX                       (0) //Testing 6 sensors
 
 
 // This enumeration matches the distance of the obstacle for PING SENSOR
@@ -293,7 +290,6 @@ class UsonicFrontSensor : public UltrasonicSensor, public SingletonTemplate<Uson
 
 };
 
-
 //Divya editing UltraSonic Ping sensor (4 pin)
 class Ultra_Sonic_4ping
 {
@@ -312,13 +308,11 @@ class Ultra_Sonic_4ping
             static int index;
             static double distance_value;
 
-
             inline bool pinNotLow(void)
             {
                 return echo_in.read();
             }
             static bool max_time_flag;
-            int instance;
 
     private :
              GPIO trig_out;
@@ -334,9 +328,8 @@ class Ultra_Sonic_4ping
              //static QueueHandle_t xQueue1,xQueue2,xQueue3;
              static QueueHandle_t xQueue[MAX_SENSOR_COUNT];
              double buff_for_recieve;
-           //  int instance;
+             int instance;
              static int zone;
-             static int i;
 
 
 };
@@ -358,59 +351,5 @@ void data_ovr_cb(uint32_t d);
 // Macro to get Singleton Instance
 #define US_FRONT UsonicFrontSensor::getInstance()
 
-//other helper function -- current index
-Ultra_Sonic_4ping* ping_get_current_instance();
-int ping_get_prev_instance(Ultra_Sonic_4ping** q);
 
-//Divya editing UltraSonic Ping sensor (4 pin)
-class three_pin
-{
-    public ://constructor for a 4-pin ping sensor
-            three_pin( LPC1758_GPIO_Type trig_pin,LPC1758_GPIO_Type echo_pins, int index1);
-            bool send3_trig();
-            static void echo3_high_callback(void );  //Callback function for the Rising edge
-            static void echo3_low_callback(void );   //Callback function for the falling edge
-            double ping3_get_from_filter(void);//
-            bool recieve3_from_queue(void);          //Returns a false if the queue is empty
-                                                    //Returns a true if the queue is returning
-            double get3_buffer_value();               //Returns a float buffer in which the queue element is being put
-            void add3_queue_value_to_filter(void);//Add the queue value to the filter
-            static int get3_zone(float avg);            //Returns the Zone of the obstacle
-            static void display3_zone(int a);
-            static int index;
-            static double distance_value;
-
-            void enable3_interrupt();
-            void disable3_interrupt();
-
-            inline bool pinNotLow(void)
-            {
-                return echo_in.read();
-            }
-            static bool max_time_flag;
-            int instance;
-
-    private :
-             GPIO trig_out;
-             GPIO echo_in;
-             int echo_pin;
-             static SemaphoreHandle_t Trig_Sem;
-             Sensor_Filter <double, double> avg_filter;
-             //Parameters for ping callbacks functions
-             static uint64_t up_time;
-             static uint64_t down_time;
-             static uint64_t  diff_time;
-             //Queue for sharing the distance values
-             //static QueueHandle_t xQueue1,xQueue2,xQueue3;
-             static QueueHandle_t xQueue[MAX_SENSOR_COUNT];
-             double buff_for_recieve;
-           //  int instance;
-             static int zone;
-             static int j;
-
-};
-three_pin* ping3_get_current_instance();
-int ping3_get_prev_instance(three_pin** q);
-
-void three_pin_sensor();
 #endif /* L4_IO_3ULTRASONIC_SENSOR_INTERRUPTS_HPP_ */
