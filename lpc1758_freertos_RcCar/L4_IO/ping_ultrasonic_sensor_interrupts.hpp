@@ -362,10 +362,10 @@ void data_ovr_cb(uint32_t d);
 Ultra_Sonic_4ping* ping_get_current_instance();
 int ping_get_prev_instance(Ultra_Sonic_4ping** q);
 
-//Divya editing UltraSonic Ping sensor (4 pin)
+//Divya editing UltraSonic Ping sensor (3 pin)
 class three_pin
 {
-    public ://constructor for a 4-pin ping sensor
+    public ://constructor for a 3-pin ping sensor
             three_pin( LPC1758_GPIO_Type trig_pin,LPC1758_GPIO_Type echo_pins, int index1);
             bool send3_trig();
             static void echo3_high_callback(void );  //Callback function for the Rising edge
