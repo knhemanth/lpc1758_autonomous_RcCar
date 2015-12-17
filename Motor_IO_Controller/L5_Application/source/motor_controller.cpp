@@ -39,9 +39,9 @@ extern DRIVER_TX_MOTORIO_DIRECTION_t motor_msg;
 extern QueueHandle_t g_adc_result_queue;
 
 float dc_stop = 7.0;
-float dc_slow = 6.35;
-float dc_normal = 6.28;
-float dc_turbo = 6.20;
+extern float dc_slow;
+extern float dc_normal;
+extern float dc_turbo;
 
 bool white_mark = false;
 int white_mark_count = 0;
