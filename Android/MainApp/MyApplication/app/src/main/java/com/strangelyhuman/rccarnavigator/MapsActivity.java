@@ -36,6 +36,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -77,17 +78,14 @@ import javax.xml.transform.Source;
         // source location lat and long for setting source marker automatically
         double source_lat;
         double source_long;
-        LatLng CarSource = new LatLng(source_lat, source_long);
+        LatLng CarSource;
 
-        //Sample LatLng for testing
-        LatLng SJSU = new LatLng(37.3351874, -121.8810715);
-
-        Button btnOn, btnOff,btOn,btConnect,btdisconnect, sndrt;
+        Button btnOn, btnOff,btOn,btConnect,btdisconnect, sndrt, carLocation;
         int BT_CONNECT_CODE = 1;
         int connect = 0;
         int start_stop = 0;
         int snd_route_en = 0;
-
+        int carUpdate = 0;
         Handler mHandler;
         TextView txt;
 
@@ -102,10 +100,10 @@ import javax.xml.transform.Source;
         private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
         //HC-06 module MAC -- slave only
-        //private static String address = "20:15:03:03:09:75";
+        private static String address = "20:15:03:03:09:75";
 
         //HC=05 module MAC --  master/slave
-        private static String address = "20:15:08:13:10:18";
+        //private static String address = "20:15:08:13:10:18";
 
         private static String tx_data1 = "0 \n";
        // private static String tx_data2 = "0 \n";
@@ -124,7 +122,7 @@ import javax.xml.transform.Source;
             setContentView(R.layout.activity_maps);
             //Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
             setUpMapIfNeeded();
-            mMap.setMyLocationEnabled(false);
+            mMap.setMyLocationEnabled(true);
 
             btnOn = (Button) findViewById(R.id.btnOn);
             btnOff = (Button) findViewById(R.id.btnOff);
@@ -133,7 +131,23 @@ import javax.xml.transform.Source;
             btdisconnect = (Button)findViewById(R.id.btdisconnect);
             sndrt = (Button) findViewById(R.id.sndrt);
             txt = (TextView) findViewById(R.id.txt);
+            carLocation = (Button) findViewById(R.id.carLoc);
             btAdapter = BluetoothAdapter.getDefaultAdapter();
+
+            //Car Source Marker Options
+
+            carLocation.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (start_stop == 1 && carUpdate == 1) {
+                        LatLng lCarSource = new LatLng(source_lat, source_long);
+
+                        CarSource = lCarSource;
+                        Toast.makeText(getApplicationContext(), CarSource.latitude + " " + CarSource.longitude,Toast.LENGTH_LONG ).show();
+                        mMap.addMarker(new MarkerOptions().position(CarSource).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                    }
+                }
+            });
 
             btOn.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -144,7 +158,7 @@ import javax.xml.transform.Source;
 
             btnOn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    mMap.setMyLocationEnabled(true);
+                   // mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(CarSource, 6));
                     if(connect == 1 && start_stop == 0) {
                         mConnectedThread.sendData(tx_data1);
                         start_stop = 1;
@@ -203,20 +217,24 @@ import javax.xml.transform.Source;
                         case 1:
                             String writeMessage = new String(writeBuf);
                             writeMessage = writeMessage.substring(begin, end);
+                            disp_temp_str = writeMessage;
                             if(lat_lon_count == 1)
                             {
                                 source_lat = Double.parseDouble(writeMessage);
+                                Log.d(TAG, Double.toString(source_lat));
                                 Log.d(TAG, disp_temp_str);
                                 lat_lon_count = 2;
                             }
                             else if(lat_lon_count == 2)
                             {
                                 source_long = Double.parseDouble(writeMessage);
+                                Log.d(TAG, Double.toString(source_long));
                                 Log.d(TAG, disp_temp_str);
                                 lat_lon_count = 1;
+                                carUpdate = 1;
                             }
 
-                            txt.setText("Data from HC-05: " + disp_temp_str);            // update TextView
+                            txt.setText("Data from HC-05: " + source_lat + " " + source_long);            // update TextView
                             break;
                     }
                 }
@@ -240,11 +258,6 @@ import javax.xml.transform.Source;
                 public boolean onMyLocationButtonClick() {
                     //check if start_stop variable is equal to 1 and place a marker at SourceLat and SourceLong
                     Toast.makeText(MapsActivity.this, "Finding your location...", Toast.LENGTH_SHORT).show();
-                    //CarSource is the LatLng that contains the position of the Car
-                    //consider moving the camera movement to the start button
-                    //using the location button might not be necessary. Can directly tie it to the start button
-                    mMap.addMarker(locationMarkerOptions.position(CarSource));
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(CarSource, 6));
                     return false;
                 }
             });
@@ -261,6 +274,7 @@ import javax.xml.transform.Source;
                         mMap.clear();
                         return;
                     }
+
 
                     //Adding a new point
                     MarkerPoints.add(point);
@@ -604,7 +618,7 @@ import javax.xml.transform.Source;
                     CarRoute = "";
                     Count_Ordinates = 0;
                     //fetching points in the ith route
-                    for (int j = 0; j < path.size(); j++) {
+                    for (int j = 1; j < path.size(); j++) {
                         HashMap<String, String> point = path.get(j);
 
                         double lat = Double.parseDouble(point.get("lat"));
@@ -614,7 +628,7 @@ import javax.xml.transform.Source;
                         //CarRoute +=  "" + lat + " " + lng + " ";
                         //Log.d(TAG, CarRoute);
                         //Log.d(TAG, position.toString());
-                        if ((j % 2 == 1) && path.size() > 15) {
+                        if ((j % 2 == 1)  && path.size() > 15) {
                             //skip this point
                             continue;
                         }
@@ -640,8 +654,8 @@ import javax.xml.transform.Source;
 
                     }
 
-                    CarRoute += destinationLat + " " + destinationLon;
-                    Count_Ordinates +=1;
+                    //CarRoute += destinationLat + " " + destinationLon;
+                    //Count_Ordinates +=1;
                     Log.d(TAG, CarRoute);
                     Log.d(TAG, Integer.toString(Count_Ordinates));
 
