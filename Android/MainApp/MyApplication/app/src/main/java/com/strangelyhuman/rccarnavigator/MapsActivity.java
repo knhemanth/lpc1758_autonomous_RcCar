@@ -95,10 +95,10 @@ import javax.xml.transform.Source;
         private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
         //HC-06 module MAC -- slave only
-        //private static String address = "20:15:03:03:09:75";
+        private static String address = "20:15:03:03:09:75";
 
         //HC=05 module MAC --  master/slave
-        private static String address = "20:15:08:13:10:18";
+        //private static String address = "20:15:08:13:10:18";
 
         private static String tx_data1 = "0 \n";
        // private static String tx_data2 = "0 \n";
@@ -195,6 +195,7 @@ import javax.xml.transform.Source;
                         case 1:
                             String writeMessage = new String(writeBuf);
                             writeMessage = writeMessage.substring(begin, end);
+                            disp_temp_str = writeMessage;
                             if(lat_lon_count == 1)
                             {
                                 source_lat = Double.parseDouble(writeMessage);
@@ -216,7 +217,7 @@ import javax.xml.transform.Source;
 
 
             //check if your phone is connected to the internet
-            if (!isConnected()) {
+            if An(!isConnected()) {
                 Toast.makeText(MapsActivity.this, "Please ensure that you are connected to the internet", Toast.LENGTH_LONG).show();
             }
 

@@ -66,6 +66,10 @@ void period_1Hz(void)
         {
             CAN_tx(can_controller,&bt_can_hb,BT_CAN_HB_WAIT);
         }
+           geo_ptr = (geo_loc*)&(geo_data_msg.data.bytes[0]);
+           CAN_rx(can_controller, &geo_data_msg, 0);
+           geo_data_arr[0] = geo_ptr->latitude;
+           geo_data_arr[1] = geo_ptr->longitude;
 
 }
 
@@ -93,7 +97,7 @@ void period_10Hz(void)
             bt_send_loop += 2;
             CAN_tx(can_controller, &can_mssg_bt, 0);
             PRINT("\nway pt data sent");
-        }
+            }
         else
         {
             data_send_flag = false;
@@ -104,10 +108,7 @@ void period_10Hz(void)
 
 void period_100Hz(void)
 {
-    geo_ptr = (geo_loc*)&(geo_data_msg.data.bytes[0]);
-    CAN_rx(can_controller, &geo_data_msg, 0);
-    geo_data_arr[0] = geo_ptr->latitude;
-    geo_data_arr[1] = geo_ptr->longitude;
+
 }
 
 void period_1000Hz(void)
