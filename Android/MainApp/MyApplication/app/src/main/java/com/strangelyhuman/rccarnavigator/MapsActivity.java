@@ -36,6 +36,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -65,22 +66,26 @@ import javax.xml.transform.Source;
         private GoogleMap mMap; // Might be null if Google Play services APK is not available.
         ArrayList<LatLng> MarkerPoints;
 
+
         private static String TAG = "Maps Activity";
         String CarRoute = "";
         int Count_Ordinates = 0;
+        boolean startButtonVariable = false;
         double destinationLat;
         double destinationLon;
         int lat_lon_count = 1;
+
         // source location lat and long for setting source marker automatically
         double source_lat;
         double source_long;
+        LatLng CarSource;
 
-        Button btnOn, btnOff,btOn,btConnect,btdisconnect, sndrt;
+        Button btnOn, btnOff,btOn,btConnect,btdisconnect, sndrt, carLocation;
         int BT_CONNECT_CODE = 1;
         int connect = 0;
         int start_stop = 0;
         int snd_route_en = 0;
-
+        int carUpdate = 0;
         Handler mHandler;
         TextView txt;
 
@@ -126,7 +131,23 @@ import javax.xml.transform.Source;
             btdisconnect = (Button)findViewById(R.id.btdisconnect);
             sndrt = (Button) findViewById(R.id.sndrt);
             txt = (TextView) findViewById(R.id.txt);
+            carLocation = (Button) findViewById(R.id.carLoc);
             btAdapter = BluetoothAdapter.getDefaultAdapter();
+
+            //Car Source Marker Options
+
+            carLocation.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (start_stop == 1 && carUpdate == 1) {
+                        LatLng lCarSource = new LatLng(source_lat, source_long);
+
+                        CarSource = lCarSource;
+                        Toast.makeText(getApplicationContext(), CarSource.latitude + " " + CarSource.longitude,Toast.LENGTH_LONG ).show();
+                        mMap.addMarker(new MarkerOptions().position(CarSource).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                    }
+                }
+            });
 
             btOn.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -137,6 +158,7 @@ import javax.xml.transform.Source;
 
             btnOn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
+                   // mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(CarSource, 6));
                     if(connect == 1 && start_stop == 0) {
                         mConnectedThread.sendData(tx_data1);
                         start_stop = 1;
@@ -199,17 +221,20 @@ import javax.xml.transform.Source;
                             if(lat_lon_count == 1)
                             {
                                 source_lat = Double.parseDouble(writeMessage);
+                                Log.d(TAG, Double.toString(source_lat));
                                 Log.d(TAG, disp_temp_str);
                                 lat_lon_count = 2;
                             }
                             else if(lat_lon_count == 2)
                             {
                                 source_long = Double.parseDouble(writeMessage);
+                                Log.d(TAG, Double.toString(source_long));
                                 Log.d(TAG, disp_temp_str);
                                 lat_lon_count = 1;
+                                carUpdate = 1;
                             }
 
-                            txt.setText("Data from HC-05: " + disp_temp_str);            // update TextView
+                            txt.setText("Data from HC-05: " + source_lat + " " + source_long);            // update TextView
                             break;
                     }
                 }
@@ -221,11 +246,18 @@ import javax.xml.transform.Source;
                 Toast.makeText(MapsActivity.this, "Please ensure that you are connected to the internet", Toast.LENGTH_LONG).show();
             }
 
+            //location marker options
+            final MarkerOptions locationMarkerOptions = new MarkerOptions();
+            locationMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+            locationMarkerOptions.title("Source");
+            locationMarkerOptions.draggable(false);
+
             //location button override
             mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
                 @Override
                 public boolean onMyLocationButtonClick() {
-                    Toast.makeText(MapsActivity.this, "Clicked the location button", Toast.LENGTH_SHORT).show();
+                    //check if start_stop variable is equal to 1 and place a marker at SourceLat and SourceLong
+                    Toast.makeText(MapsActivity.this, "Finding your location...", Toast.LENGTH_SHORT).show();
                     return false;
                 }
             });
@@ -243,6 +275,7 @@ import javax.xml.transform.Source;
                         return;
                     }
 
+
                     //Adding a new point
                     MarkerPoints.add(point);
 
@@ -253,41 +286,51 @@ import javax.xml.transform.Source;
                     options.position(point);
 
                     if (MarkerPoints.size() == 1) {
-                        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                        options.draggable(true);
-                        options.title("Source");
-                        Toast.makeText(MapsActivity.this, "Add a Origin Marker", Toast.LENGTH_SHORT).show();
-                    }
-
-                    if (MarkerPoints.size() == 2) {
                         options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
                         options.title("Destination" + " " + point.latitude + " " + point.longitude);
                         options.draggable(true);
                         Toast.makeText(MapsActivity.this, "Add a Destination Marker", Toast.LENGTH_SHORT).show();
                     }
 
-                 // DestinationMarker += MarkerPoints.get(1).latitude + " " + MarkerPoints.get(1).longitude;
+//                    if (MarkerPoints.size() == 1) {
+//                        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+//                        options.draggable(true);
+//                        options.title("Source");
+//                        Toast.makeText(MapsActivity.this, "Add a Origin Marker", Toast.LENGTH_SHORT).show();
+//                    }
+
+
+//                    if (MarkerPoints.size() == 2) {
+//                        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+//                        options.title("Destination" + " " + point.latitude + " " + point.longitude);
+//                        options.draggable(true);
+//                        Toast.makeText(MapsActivity.this, "Add a Destination Marker", Toast.LENGTH_SHORT).show();
+//                    }
+
+                    // DestinationMarker += MarkerPoints.get(1).latitude + " " + MarkerPoints.get(1).longitude;
+
+
+
 
 
                     //add marker to the map
                     mMap.addMarker(options);
-                    if (MarkerPoints.size() == 2) {
-                        LatLng origin = MarkerPoints.get(0);
-                        LatLng destination = MarkerPoints.get(1);
+                    if (MarkerPoints.size() == 1) {
+                        //LatLng origin = MarkerPoints.get(0); //set your origin point
+                        LatLng destination = MarkerPoints.get(0);
                         //getting a string for the directions api
                         int tempLat = (int) (destination.latitude * 1000000);
                         destinationLat = tempLat / 1000000d;
                         int tempLon = (int) (destination.longitude * 1000000);
                         destinationLon = tempLon / 1000000d;
                         Log.d(TAG, Double.toString(destinationLat) + " " + Double.toString(destinationLon));
-                        String url = getDirectionsUrl(origin, destination);
+                        String url = getDirectionsUrl(CarSource, destination);
                         DownloadTask downloadTask1 = new DownloadTask();
                         downloadTask1.execute(url);
                         snd_route_en = 1;
                     }
                 }
             });
-            //add an event for button route
         }
 
         private BluetoothSocket createBluetoothSocket(BluetoothDevice device) throws IOException {
@@ -575,7 +618,7 @@ import javax.xml.transform.Source;
                     CarRoute = "";
                     Count_Ordinates = 0;
                     //fetching points in the ith route
-                    for (int j = 0; j < path.size(); j++) {
+                    for (int j = 1; j < path.size(); j++) {
                         HashMap<String, String> point = path.get(j);
 
                         double lat = Double.parseDouble(point.get("lat"));
@@ -585,7 +628,7 @@ import javax.xml.transform.Source;
                         //CarRoute +=  "" + lat + " " + lng + " ";
                         //Log.d(TAG, CarRoute);
                         //Log.d(TAG, position.toString());
-                        if ((j % 2 == 1) && path.size() > 15) {
+                        if ((j % 2 == 1)  && path.size() > 15) {
                             //skip this point
                             continue;
                         }
@@ -611,8 +654,8 @@ import javax.xml.transform.Source;
 
                     }
 
-                    CarRoute += destinationLat + " " + destinationLon;
-                    Count_Ordinates +=1;
+                    //CarRoute += destinationLat + " " + destinationLon;
+                    //Count_Ordinates +=1;
                     Log.d(TAG, CarRoute);
                     Log.d(TAG, Integer.toString(Count_Ordinates));
 

@@ -7,7 +7,7 @@
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:tools="http://schemas.android.com/tools"
-            android:layout_height="421dp"
+            android:layout_height="405dp"
             android:layout_width = "match_parent"
             android:id="@+id/map"
             tools:context=".MapsActivity"
@@ -61,6 +61,14 @@
                 android:layout_centerHorizontal="true"
                 android:layout_column="3" />
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="v0.1"
+                android:id="@+id/textView"
+                android:layout_column="6" />
+
         </TableRow>
 
         <TableRow
@@ -92,6 +100,15 @@
                 android:text="Send Route"
                 android:id="@+id/sndrt"
                 android:layout_column="2" />
+
+            <Button
+                style="?android:buttonBarButtonStyle"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:text="Car Loc"
+                android:id="@+id/carLoc"
+                android:layout_column="3"
+                android:layout_span="4" />
 
         </TableRow>
     </TableLayout>
