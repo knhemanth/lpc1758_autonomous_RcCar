@@ -1,13 +1,18 @@
------------------------------------------------------------------------------
-To get started, have a look at lpc_freerots_xxxx/L5_Application/main.cpp and the example tasks.
+This project is part of coursework (CMPE 243 - Embedded Systems Applications) at San Jose State University.
 
-You can change a #define 0 to #define 1 for one example at a time and look
-through the code of each example.
+The aim of this project is to build a working autonomous car using any available RC car by a team of 9 members. The car is controlled by a set of 5 lpc1758 micro controllers that communicate with each other via a CAN bus.
 
-The general idea is to interact with the project through terminal commands.
------------------------------------------------------------------------------
-See "ChangeLog" for the changes made to the sample project source code.
------------------------------------------------------------------------------
+The controller responsibilites are:
 
-The razor_imu_9dof directory has the source code for running the imu sensor.
-Because it is a different platform, the source has been placed in its own directory.
+1. Motor and IO Controller - In charge of receiving CAN messages from master controller and drive the motors appropriately.
+The LCD display is also interfaced to this controller which displays information regarding the current heading, speed, obstacles detected, status of the CAN bus, etc.
+
+2. Geo Controller - GPS and IMU sensors are interfaced here. The controller computes the current heading, location and transmits the information to the master controller. The destination co-ordinates are received from the master controller.
+
+3. Sensor Controller - The ultrasonic obstacle sensors are interfaced to this controller. The controller determines the presence/absence of obstacles and categorizes them into zones (near, mid and far) and transmits this information to the master contorller.
+
+4. Master Controller - Receives information from all other controllers, computes the bearing and determines how the car should drive. Transmits driving directions to the motor controller. Also receives the route information from the mobile application and transmits destination co-ordinates to the Geo-controller.
+
+5. Bluetooth Controller - Interacts with the mobile application. The mobile application uses google maps to compute a route between current location of the car and the required destination. This route information is transmitted to the bluetooth controller. The bluetooth controller also transmits current location of the car back to the mobile app.
+
+For details of design and implementation please look at wiki.
