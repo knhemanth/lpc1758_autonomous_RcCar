@@ -2,7 +2,7 @@
  * master_controller.cpp
  *
  *  Created on: Oct 29, 2015
- *      Author: Hemanth K N
+ *      Author: Hemanth K N, Akshay Vijaykumar
  */
 
 #include <string.h>
