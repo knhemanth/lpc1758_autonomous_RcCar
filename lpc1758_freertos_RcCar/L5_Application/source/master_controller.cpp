@@ -2,7 +2,10 @@
  * master_controller.cpp
  *
  *  Created on: Oct 29, 2015
- *      Author: Hemanth K N, Akshay Vijaykumar
+ *
+ *      Author: Hemanth K N, 
+ *              Akshay Vijaykumar, 
+ *              Aditya Devaguptapu
  */
 
 #include <string.h>
